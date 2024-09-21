@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 기존의 CSS 스타일은 여기에 추가할 수 있습니다 */
