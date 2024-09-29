@@ -26,9 +26,8 @@ export default function Home() {
       .gt('stock', 0)
       .order('created_at', { ascending: false })
     if (error) {
-      console.log('error', error)
+      console.error('Error fetching fruits:', error)
     } else {
-      console.log('Fetched fruits:', data)
       setFruits(data || [])
     }
   }, [supabase])
@@ -39,9 +38,7 @@ export default function Home() {
 
   const getImageUrl = (path: string) => {
     if (!path) return '/images/placeholder-fruit.jpg'
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`
-    console.log('Image URL:', url)
-    return url
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`
   }
 
   return (
