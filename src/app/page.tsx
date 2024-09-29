@@ -17,14 +17,7 @@ interface Fruit {
 
 export default function Home() {
   const [fruits, setFruits] = useState<Fruit[]>([])
-  const [cart, setCart] = useState<{[key: number]: number}>({})
   const supabase = createClientComponentClient()
-
-  useEffect(() => {
-    fetchFruits()
-    const savedCart = JSON.parse(localStorage.getItem('cart') || '{}')
-    setCart(savedCart)
-  }, [])
 
   const fetchFruits = useCallback(async () => {
     const { data, error } = await supabase
@@ -35,18 +28,14 @@ export default function Home() {
     if (error) {
       console.log('error', error)
     } else {
-      console.log('Fetched fruits:', data)  // 로그 추가
+      console.log('Fetched fruits:', data)
       setFruits(data || [])
     }
   }, [supabase])
 
-  function addToCart(fruitId: number) {
-    setCart(prev => {
-      const newCart = {...prev, [fruitId]: (prev[fruitId] || 0) + 1}
-      localStorage.setItem('cart', JSON.stringify(newCart))
-      return newCart
-    })
-  }
+  useEffect(() => {
+    fetchFruits()
+  }, [fetchFruits])
 
   const getImageUrl = (path: string) => {
     if (!path) return '/images/placeholder-fruit.jpg'
