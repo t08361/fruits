@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 
@@ -15,27 +15,50 @@ export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const supabase = createClientComponentClient()
 
-  useEffect(() => {
+  const fetchCartItems = useCallback(async () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '{}')
-    fetchCartItems(cart)
-  }, [])
-
-  async function fetchCartItems(cart: {[key: number]: number}) {
     const ids = Object.keys(cart).map(Number)
     if (ids.length === 0) return
 
     const { data, error } = await supabase
       .from('fruits')
-      .select('*')
+      .select('id, name, price')
       .in('id', ids)
     
-    if (error) console.log('error', error)
-    else {
+    if (error) {
+      console.error('장바구니 아이템 조회 중 오류 발생:', error)
+    } else {
       setCartItems(data.map(item => ({
         ...item,
         quantity: cart[item.id]
       })))
     }
+  }, [supabase])
+
+  useEffect(() => {
+    fetchCartItems()
+  }, [fetchCartItems])
+
+  const updateQuantity = (id: number, newQuantity: number) => {
+    if (newQuantity < 1) return
+
+    const cart = JSON.parse(localStorage.getItem('cart') || '{}')
+    cart[id] = newQuantity
+    localStorage.setItem('cart', JSON.stringify(cart))
+
+    setCartItems(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, quantity: newQuantity } : item
+      )
+    )
+  }
+
+  const removeItem = (id: number) => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '{}')
+    delete cart[id]
+    localStorage.setItem('cart', JSON.stringify(cart))
+
+    setCartItems(prev => prev.filter(item => item.id !== id))
   }
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -47,12 +70,18 @@ export default function Cart() {
         <div>
           <ul>
             {cartItems.map(item => (
-              <li key={item.id} className="mb-4">
-                <p>{item.name} - {item.price}원 x {item.quantity} = {item.price * item.quantity}원</p>
+              <li key={item.id} className="mb-4 flex items-center justify-between">
+                <span>{item.name} - {item.price.toLocaleString()}원</span>
+                <div>
+                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="bg-gray-200 px-2 py-1 rounded">-</button>
+                  <span className="mx-2">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="bg-gray-200 px-2 py-1 rounded">+</button>
+                  <button onClick={() => removeItem(item.id)} className="ml-4 bg-red-500 text-white px-2 py-1 rounded">삭제</button>
+                </div>
               </li>
             ))}
           </ul>
-          <p className="mt-4 font-bold">총액: {total}원</p>
+          <p className="mt-4 font-bold">총액: {total.toLocaleString()}원</p>
           <button className="mt-4 bg-green-500 text-white px-4 py-2 rounded">
             결제하기
           </button>

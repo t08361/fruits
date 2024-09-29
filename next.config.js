@@ -1,17 +1,15 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  images: {
-    domains: ['your-project-id.supabase.co'],
-  },
-  async redirects() {
-    return [
-      {
-        source: '/auth/callback',
-        destination: '/',
-        permanent: false,
-      },
-    ]
-  },
-}
+   /** @type {import('next').NextConfig} */
+   const nextConfig = {
+    images: {
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'vfosqarthtqnlrcbalfl.supabase.co',
+          port: '',
+          pathname: '/storage/v1/object/public/fruits/**',
+        },
+      ],
+    },
+  }
 
-module.exports = nextConfig
+  module.exports = nextConfig

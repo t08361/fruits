@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -9,11 +9,18 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
 
+  useEffect(() => {
+    const message = new URL(window.location.href).searchParams.get('message')
+    if (message) setMessage(message)
+  }, [])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError(error.message)
@@ -28,6 +35,7 @@ export default function Login() {
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">로그인</h2>
         </div>
+        {message && <div className="text-green-500 text-sm text-center">{message}</div>}
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <input type="hidden" name="remember" defaultValue="true" />
           <div className="rounded-md shadow-sm -space-y-px">
