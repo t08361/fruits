@@ -161,7 +161,7 @@ export default function FruitDetail() {
         setMessage(`가격 제안 중 오류가 발생했습니다: ${error.message}`)
       } else {
         console.log('Submitted price suggestion:', data)
-        setMessage('가격 제안이 접수되었습니다. 검토 후 연락 드리겠습니다.')
+        setMessage('가격 제안이 접수되었습니다. 내일 오전 7시 결과 문자드리고 당일 배송해드립니다.')
         setSuggestedPrice('')
         setPhoneNumber('')
       }
@@ -188,7 +188,7 @@ export default function FruitDetail() {
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
           <Link href="/" className="text-2xl sm:text-3xl font-bold text-green-600">신선마켓 몽당몽당열매</Link>
-          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
+          <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
               <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -287,7 +287,7 @@ export default function FruitDetail() {
                         제안하기
                       </button>
                     </div>
-                    {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
+                    {message && <p className="mt-2 text-sm text-red-600">{message}</p>}
                   </div>
                 )}
                 <Link href="/" className="block text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors">
