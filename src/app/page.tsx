@@ -43,9 +43,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100">
-      <header className="bg-white shadow-md sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-green-600">신선마켓 몽당몽당열매</h1>
+      <header className="bg-white shadow-md sticky top-0 z-10 p-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-bold text-green-600">신선마켓 몽당몽당열매</h1>
           <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -55,33 +55,32 @@ export default function Home() {
           </a>
         </div>
       </header>
-      <main className="container mx-auto px-1 py-6 sm:py-8">
-        <h2 className="text-2xl sm:text-3xl font-semibold mb-8 text-center text-gray-800">산지 직송 상품만을 취급합니다.</h2>
+      <main className="p-4">
+        <h2 className="text-lg font-semibold mb-4 text-center text-gray-800">산지 직송 상품만을 취급합니다.</h2>
         {fruits.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
             {fruits.map((fruit) => (
               <Link href={`/fruit/${fruit.id}`} key={fruit.id} className="block">
-                <div className="bg-white rounded-lg overflow-hidden shadow-lg transition-transform hover:scale-105 cursor-pointer flex">
-                  <div className="relative w-2/5 h-56">
+                <div className="bg-white rounded-lg overflow-hidden shadow-md transition-transform hover:scale-105 cursor-pointer">
+                  <div className="relative aspect-square">
                     <Image
                       src={getImageUrl(fruit.image_url)}
                       alt={fruit.name}
                       layout="fill"
                       objectFit="cover"
-                      className="rounded-l-lg"
                     />
                   </div>
-                  <div className="p-4 w-3/5">
-                    <h3 className="text-xl font-semibold mb-2 text-gray-800">{fruit.name}</h3>
-                    <p className="text-lg text-gray-600 mb-2">가격: {fruit.price.toLocaleString()}원</p>
-                    <p className="text-base text-gray-600">선착순: {fruit.stock}명</p>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">{fruit.name}</h3>
+                    <p className="text-base text-gray-600 mb-1">가격: {fruit.price.toLocaleString()}원</p>
+                    <p className="text-sm text-gray-500">선착순: {fruit.stock}명</p>
                   </div>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500 text-base sm:text-lg">현재 판매 중인 과일이 없습니다.</p>
+          <p className="text-center text-gray-500 text-base">현재 판매 중인 과일이 없습니다.</p>
         )}
       </main>
     </div>

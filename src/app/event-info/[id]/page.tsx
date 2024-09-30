@@ -46,7 +46,7 @@ export default function EventInfo() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 p-4 sm:p-8">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden p-6">
-        <h1 className="text-3xl font-bold mb-4">{fruit.name} </h1>
+        <h1 className="text-3xl font-bold mb-4">{fruit.name} 이벤트 설명</h1>
         <p className="mb-4">{fruit.description}</p>
         <p className="mb-2"><strong>이벤트 설명 : 해당 과일을 원하시는 가격에 구매하세요.</strong></p>
         <p className="mb-2"><strong>가격:</strong> {fruit.price.toLocaleString()}원</p>
@@ -54,7 +54,6 @@ export default function EventInfo() {
         <p className="mb-5"><strong>이벤트 종료 시간:</strong> {eventEndTime.toLocaleString()}</p>
         <h2 className="text-2xl font-bold mb-2">이벤트 규칙</h2>
         <ul className="list-disc list-inside mb-4">
-          <li>판매자의 마진율을 확인하여 판매가 성사되면 문자로 결과를 알려드립니다.</li>
           <li>원하는 가격을 제안할 수 있습니다.</li>
           <li>가장 높은 가격순으로 선착순 선발합니다.</li>
           <li>선착순 인원의 제안 금액의 평균을 내어 판매자가 마진율을 책정합니다.</li>

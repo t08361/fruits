@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Timer from '@/components/Timer'
 
 interface Fruit {
@@ -29,6 +29,7 @@ export default function FruitDetail() {
   const [showPhoneInput, setShowPhoneInput] = useState(false)
   const supabase = createClientComponentClient()
   const params = useParams()
+  const router = useRouter()
   const id = params?.id
 
   const fetchFruit = useCallback(async () => {
@@ -123,7 +124,7 @@ export default function FruitDetail() {
       }
     } catch (error) {
       console.error('Unexpected error:', error)
-      setMessage('예기치 못한 오류가 발생했습니다. 다시 시도해 주세요.')
+      setMessage('예기치 못한 오류가 발생했습니다. 다시 시도해 세요.')
     }
   }
 
@@ -139,7 +140,7 @@ export default function FruitDetail() {
     }
 
     if (!fruit) {
-      setMessage('과일 정보를 불러오는 중 오류가 발생했습니다.')
+      setMessage('과일 보를 불러오는 중 오류가 발생했습니다.')
       return
     }
 
@@ -161,7 +162,7 @@ export default function FruitDetail() {
         setMessage(`가격 제안 중 오류가 발생했습니다: ${error.message}`)
       } else {
         console.log('Submitted price suggestion:', data)
-        setMessage('가격 제안이 접수되었습니다. 내일 오전 7시 결과 문자드리고 당일 배송해드립니다.')
+        setMessage('가격 제안이 접수되었습니다. 내일 오전 9시에 결과문자드리고 당일 배송해드립니다.')
         setSuggestedPrice('')
         setPhoneNumber('')
       }
@@ -213,14 +214,14 @@ export default function FruitDetail() {
               <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description || '설명이 없습니다.'}</p>
               <div className="flex justify-between items-center mb-1 sm:mb-2">
                 <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
-                <div className="flex items-center space-x-1">
-                  <span className="text-xs font-medium text-gray-600">가격비교</span>
-                  <a href={`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(fruit.name)}`} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845Z"/>
-                    </svg>
-                  </a>
-                </div>
+                <a 
+                  href={`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(fruit.name)}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-black text-xs font-medium hover:underline transition-colors"
+                >
+                  가격비교
+                </a>
               </div>
               <p className="text-gray-600 mb-2 sm:mb-4">선착순: {fruit.stock}명</p>
               
@@ -231,15 +232,23 @@ export default function FruitDetail() {
                 >
                   {isEventEnded ? "구매 신청하기" : "현재가로 즉시 구매"}
                 </button>
-                <div className="flex justify-between items-center">
-                  {!isEventEnded ? (
-                    <Timer endTime={endTime} />
-                  ) : (
-                    <p className="text-lg font-semibold text-red-600">이벤트가 종료되었습니다.</p>
-                  )}
-                  <Link href={`/event-info/${id}`} className="text-blue-500 hover:text-blue-700 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    {!isEventEnded ? (
+                      <>
+                        <Timer endTime={endTime} />
+                        <p className="text-sm text-gray-600 mt-1">🔔 내일 오전 9시 마감</p>
+                      </>
+                    ) : (
+                      <p className="text-lg font-semibold text-red-600">이벤트가 종료되었습니다.</p>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => router.push(`/event-info/${id}`)}
+                    className="text-blue-500 hover:text-blue-700 transition-colors"
+                  >
                     이벤트 설명 ⓘ
-                  </Link>
+                  </button>
                 </div>
                 {isEventEnded && showPhoneInput && (
                   <div className="mt-4 sm:mt-6">
