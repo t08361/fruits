@@ -188,7 +188,7 @@ export default function FruitDetail() {
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
           <Link href="/" className="text-2xl sm:text-3xl font-bold text-green-600">신선마켓 몽당몽당열매</Link>
-          <a href="https://www.instagram.com/p/C_pNg5vp6Df/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
+          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
               <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -211,13 +211,23 @@ export default function FruitDetail() {
             <div className="p-4 sm:p-8 w-full">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{fruit.name}</h1>
               <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description || '설명이 없습니다.'}</p>
-              <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-1 sm:mb-2">가격: {fruit.price.toLocaleString()}원</p>
+              <div className="flex justify-between items-center mb-1 sm:mb-2">
+                <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs font-medium text-gray-600">가격비교</span>
+                  <a href={`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(fruit.name)}`} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845Z"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
               <p className="text-gray-600 mb-2 sm:mb-4">선착순: {fruit.stock}명</p>
               
               <div className="space-y-4">
                 <button 
                   onClick={setCurrentPrice}
-                  className="w-full sm:w-auto bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                  className="w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
                 >
                   {isEventEnded ? "구매 신청하기" : "현재가로 즉시 구매"}
                 </button>
@@ -239,12 +249,12 @@ export default function FruitDetail() {
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="border rounded px-3 py-2 w-full"
+                        className="border rounded-full px-4 py-2 w-full"
                         placeholder="전화번호 입력 (예: 01012345678)"
                       />
                       <button
                         onClick={submitPurchase}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
                       >
                         구매 신청
                       </button>
@@ -254,25 +264,25 @@ export default function FruitDetail() {
                 )}
                 {!isEventEnded && (
                   <div className="mt-4 sm:mt-6">
-                    <h2 className="text-lg font-semibold mb-2">원하는 가격 제안하기</h2>
+                    {/* <h2 className="text-lg font-semibold mb-2">원하는 가격 제안하기</h2> */}
                     <div className="space-y-2">
                       <input
                         type="number"
                         value={suggestedPrice}
                         onChange={(e) => setSuggestedPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                        className="border rounded px-3 py-2 w-full"
+                        className="border rounded-full px-4 py-2 w-full"
                         placeholder="원하는 가격 입력"
                       />
                       <input
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="border rounded px-3 py-2 w-full"
+                        className="border rounded-full px-4 py-2 w-full"
                         placeholder="전화번호 입력 (예: 01012345678)"
                       />
                       <button
                         onClick={suggestPrice}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
                       >
                         제안하기
                       </button>

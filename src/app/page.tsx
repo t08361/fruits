@@ -55,7 +55,7 @@ export default function Home() {
           </a>
         </div>
       </header>
-      <main className="container mx-auto px-4 py-6 sm:py-8">
+      <main className="container mx-auto px-1 py-6 sm:py-8">
         <h2 className="text-2xl sm:text-3xl font-semibold mb-8 text-center text-gray-800">산지 직송 상품만을 취급합니다.</h2>
         {fruits.length > 0 ? (
           <div className="space-y-4">
@@ -71,7 +71,7 @@ export default function Home() {
                       className="rounded-l-lg"
                     />
                   </div>
-                  <div className="p-12 w-3/5">
+                  <div className="p-4 w-3/5">
                     <h3 className="text-xl font-semibold mb-2 text-gray-800">{fruit.name}</h3>
                     <p className="text-lg text-gray-600 mb-2">가격: {fruit.price.toLocaleString()}원</p>
                     <p className="text-base text-gray-600">선착순: {fruit.stock}명</p>
