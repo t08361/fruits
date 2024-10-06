@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'  // 'useRouter' 대신 'useParams'만 사용
 
 interface Fruit {
   id: number
@@ -12,7 +12,7 @@ interface Fruit {
   price: number
   stock: number
   image_url: string
-  image_url_2: string  // 두 번째 이미지 URL 추가
+  image_url_2: string
   description: string
   participants: number
   created_at: string
@@ -29,7 +29,6 @@ export default function FruitDetail() {
   const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const supabase = createClientComponentClient()
   const params = useParams()
-  const router = useRouter()
   const id = params?.id
 
   const fetchFruit = useCallback(async () => {
@@ -55,16 +54,14 @@ export default function FruitDetail() {
   const calculateDiscountedPrices = useCallback(() => {
     if (!fruit) return ['?', '?', '?', '?', '?']
     const originalPrice = fruit.price
-    const discounts = [1, 0.95, 0.92, 0.90, 0.88, 0.97] // 0%, 5%, 8%, 10%, 12%, 3% 할인
+    const discounts = [1, 0.95, 0.92, 0.90, 0.88, 0.97]
     const discountedPrices = discounts.map(discount => 
       Math.round(originalPrice * discount).toLocaleString()
     )
-    // 가격 배열을 섞습니다
     for (let i = discountedPrices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [discountedPrices[i], discountedPrices[j]] = [discountedPrices[j], discountedPrices[i]];
     }
-    // 5개의 가격만 반환합니다
     return discountedPrices.slice(0, 5)
   }, [fruit])
 
