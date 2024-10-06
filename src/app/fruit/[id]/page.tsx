@@ -5,7 +5,6 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import Timer from '@/components/Timer'
 
 interface Fruit {
   id: number
@@ -21,12 +20,13 @@ interface Fruit {
 
 export default function FruitDetail() {
   const [fruit, setFruit] = useState<Fruit | null>(null)
-  const [suggestedPrice, setSuggestedPrice] = useState<number | ''>('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [message, setMessage] = useState('')
-  const [endTime, setEndTime] = useState<Date | null>(null)
-  const [isEventEnded, setIsEventEnded] = useState(false)
-  const [showPhoneInput, setShowPhoneInput] = useState(false)
+  const [boxValues, setBoxValues] = useState<string[]>(['?', '?', '?', '?', '?'])
+  const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false)
+  const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const supabase = createClientComponentClient()
   const params = useParams()
   const router = useRouter()
@@ -44,9 +44,6 @@ export default function FruitDetail() {
         console.error('Error fetching fruit:', error)
       } else {
         setFruit(data)
-        const createdAt = new Date(data.created_at)
-        const endTime = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate() + 1, 7, 0, 0)
-        setEndTime(endTime)
       }
     }
   }, [id, supabase])
@@ -55,94 +52,56 @@ export default function FruitDetail() {
     fetchFruit()
   }, [fetchFruit])
 
-  useEffect(() => {
-    if (endTime) {
-      const timer = setInterval(() => {
-        if (new Date() >= endTime) {
-          setIsEventEnded(true)
-          clearInterval(timer)
-        }
-      }, 1000)
-
-      return () => clearInterval(timer)
+  const calculateDiscountedPrices = useCallback(() => {
+    if (!fruit) return ['?', '?', '?', '?', '?']
+    const originalPrice = fruit.price
+    const discounts = [1, 0.95, 0.92, 0.90, 0.88, 0.97] // 0%, 5%, 8%, 10%, 12%, 3% 할인
+    const discountedPrices = discounts.map(discount => 
+      Math.round(originalPrice * discount).toLocaleString()
+    )
+    // 가격 배열을 섞습니다
+    for (let i = discountedPrices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [discountedPrices[i], discountedPrices[j]] = [discountedPrices[j], discountedPrices[i]];
     }
-  }, [endTime])
+    // 5개의 가격만 반환합니다
+    return discountedPrices.slice(0, 5)
+  }, [fruit])
 
-  function setCurrentPrice() {
-    if (fruit) {
-      if (isEventEnded) {
-        setShowPhoneInput(true)
-      } else {
-        setSuggestedPrice(fruit.price)
-      }
-    }
-  }
-
-  async function submitPurchase() {
+  const verifyPhone = () => {
     if (!phoneNumber || phoneNumber.length < 10) {
       setMessage('유효한 전화번호를 입력해주세요.')
       return
     }
-
-    try {
-      let result;
-      if (isEventEnded) {
-        // 이벤트가 종료된 경우, price_suggestions 테이블에 데이터 삽입
-        result = await supabase
-          .from('price_suggestions')
-          .insert([
-            { 
-              fruit_id: id, 
-              suggested_price: fruit?.price, // 현재 과일 가격 사용
-              phone_number: phoneNumber 
-            }
-          ])
-          .select()
-      } else {
-        // 이벤트가 진행 중인 경우, 기존의 purchases 테이블에 데이터 삽입
-        result = await supabase
-          .from('purchases')
-          .insert([
-            { 
-              fruit_id: id, 
-              price: fruit?.price,
-              phone_number: phoneNumber 
-            }
-          ])
-          .select()
-      }
-
-      const { data, error } = result;
-
-      if (error) {
-        console.error('Error submitting purchase:', error)
-        setMessage(`구매 신청 중 오류가 발생했습니다: ${error.message}`)
-      } else {
-        console.log('Submitted purchase:', data)
-        setMessage('구매 신청이 완료되었습니다. 곧 연락 드리겠습니다.')
-        setPhoneNumber('')
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error)
-      setMessage('예기치 못한 오류가 발생했습니다. 다시 시도해 세요.')
-    }
+    setIsPhoneVerified(true)
+    setMessage('전화번호가 확인되었습니다. 랜덤 박스를 선택해주세요.')
   }
 
-  async function suggestPrice() {
-    if (!suggestedPrice || suggestedPrice <= 0) {
-      setMessage('유효한 가격을 입력해주세요.')
+  const selectBox = async (index: number) => {
+    if (!isPhoneVerified) {
+      setMessage('먼저 전화번호를 입력하고 확인해주세요.')
       return
     }
 
-    if (!phoneNumber || phoneNumber.length < 10) {
-      setMessage('유효한 전화번호를 입력해주세요.')
+    if (isBoxesRevealed) {
+      setMessage('이미 선택하셨습니다.')
       return
     }
 
-    if (!fruit) {
-      setMessage('과일 보를 불러오는 중 오류가 발생했습니다.')
-      return
-    }
+    const discountedPrices = calculateDiscountedPrices()
+    const selectedPriceString = discountedPrices[index].replace(',', '')
+    const selectedPriceNumber = parseInt(selectedPriceString, 10)
+    setSelectedPrice(selectedPriceNumber)
+
+    const newBoxValues = [...boxValues]
+    newBoxValues[index] = discountedPrices[index]
+    setBoxValues(newBoxValues)
+    setIsBoxesRevealed(true)
+    setMessage(`${selectedPriceNumber.toLocaleString()}원에 당첨되었습니다! 구매하시겠습니까?`)
+  }
+
+  const confirmPurchase = async () => {
+    if (!selectedPrice || !fruit) return
 
     try {
       const { data, error } = await supabase
@@ -150,21 +109,19 @@ export default function FruitDetail() {
         .insert([
           { 
             fruit_id: id, 
-            fruit_name: fruit.name,  // 과일 이름 추가
-            suggested_price: suggestedPrice, 
-            phone_number: phoneNumber 
+            suggested_price: selectedPrice,
+            phone_number: phoneNumber,
+            fruit_name: fruit.name
           }
         ])
-        .select()
 
       if (error) {
         console.error('Error submitting price suggestion:', error)
-        setMessage(`가격 제안 중 오류가 발생했습니다: ${error.message}`)
+        setMessage(`구매 신청 중 오류가 발생했습니다: ${error.message}`)
       } else {
         console.log('Submitted price suggestion:', data)
-        setMessage('가격 제안이 접수되었습니다. 내일 오전 9시에 결과문자드리고 당일 배송해드립니다.')
-        setSuggestedPrice('')
-        setPhoneNumber('')
+        setMessage('구매가 완료되었습니다. 문자드리겠습니다!')
+        setIsPurchaseConfirmed(true)
       }
     } catch (error) {
       console.error('Unexpected error:', error)
@@ -182,7 +139,7 @@ export default function FruitDetail() {
     return <div>유효하지 않은 과일 ID입니다.</div>
   }
 
-  if (!fruit || !endTime) return <div className="text-center py-8">로딩 중...</div>
+  if (!fruit) return <div className="text-center py-8">로딩 중...</div>
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100">
@@ -211,97 +168,93 @@ export default function FruitDetail() {
             </div>
             <div className="p-4 sm:p-8 w-full">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{fruit.name}</h1>
-              <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description || '설명이 없습니다.'}</p>
+              {fruit.description && (
+                <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description}</p>
+              )}
+              
               <div className="flex justify-between items-center mb-1 sm:mb-2">
                 <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
-                <a 
-                  href={`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(fruit.name)}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-black text-xs font-medium hover:underline transition-colors"
-                >
-                  가격비교
-                </a>
+                <div className="text-xs text-gray-600">
+                  <p>쿠팡 평균가: 27000원</p>
+                  <p>네이버 평균가: 28000원</p>
+                </div>
               </div>
-              <p className="text-gray-600 mb-2 sm:mb-4">선착순: {fruit.stock}명</p>
               
               <div className="space-y-4">
-                <button 
-                  onClick={setCurrentPrice}
-                  className="w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
-                >
-                  {isEventEnded ? "구매 신청하기" : "현재가로 즉시 구매"}
-                </button>
-                <div className="flex justify-between items-start">
-                  <div>
-                    {!isEventEnded ? (
-                      <>
-                        <Timer endTime={endTime} />
-                        <p className="text-sm text-gray-600 mt-1">🔔 내일 오전 9시 마감</p>
-                      </>
+                <div className="flex flex-col items-center my-4">
+                  <p className={`text-sm mb-2 ${isBoxesRevealed ? 'text-gray-600' : 'text-red-600 font-bold'}`}>
+                    {isBoxesRevealed 
+                      ? `${selectedPrice?.toLocaleString()}원에 당첨되었습니다!` 
+                      : isPhoneVerified
+                        ? "원하시는 랜덤 박스를 선택해주세요!"
+                        : "전화번호를 입력하시면 랜덤박스를 오픈할 기회가 주어집니다!"}
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {boxValues.map((value, index) => (
+                      <button
+                        key={index}
+                        onClick={() => selectBox(index)}
+                        disabled={!isPhoneVerified || isBoxesRevealed}
+                        className={`w-20 h-20 ${
+                          isBoxesRevealed && value === selectedPrice?.toLocaleString() 
+                            ? 'bg-green-500' 
+                            : isPhoneVerified && !isBoxesRevealed
+                              ? 'bg-yellow-400 hover:bg-yellow-500'
+                              : 'bg-gray-300'
+                        } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
+                      >
+                        {value}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 sm:mt-6">
+                 
+                  <div className="space-y-2">
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="border rounded-full px-4 py-2 w-full"
+                      placeholder="전화번호 입력 (예: 01012345678)"
+                      disabled={isPhoneVerified}
+                    />
+                    {!isPhoneVerified ? (
+                      <button
+                        onClick={verifyPhone}
+                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
+                      >
+                        전화번호 입력하고 랜덤박스 열기
+                      </button>
+                    ) : isBoxesRevealed && !isPurchaseConfirmed ? (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={confirmPurchase}
+                          className="flex-1 bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                        >
+                          구매하기
+                        </button>
+                        <button
+                          onClick={() => setMessage('구매를 취소하셨습니다.')}
+                          className="flex-1 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          취소하기
+                        </button>
+                      </div>
+                    ) : isPurchaseConfirmed ? (
+                      <p className="text-center text-green-600 font-semibold">구매가 완료되었습니다!</p>
                     ) : (
-                      <p className="text-lg font-semibold text-red-600">이벤트가 종료되었습니다.</p>
+                      <p className="text-center text-blue-600 font-semibold">랜덤 박스를 선택해주세요!</p>
                     )}
                   </div>
-                  <button 
-                    onClick={() => router.push(`/event-info/${id}`)}
-                    className="text-blue-500 hover:text-blue-700 transition-colors"
-                  >
-                    이벤트 설명 ⓘ
-                  </button>
+                  {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
                 </div>
-                {isEventEnded && showPhoneInput && (
-                  <div className="mt-4 sm:mt-6">
-                    <h2 className="text-lg font-semibold mb-2">구매 신청하기</h2>
-                    <div className="space-y-2">
-                      <input
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="border rounded-full px-4 py-2 w-full"
-                        placeholder="전화번호 입력 (예: 01012345678)"
-                      />
-                      <button
-                        onClick={submitPurchase}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
-                      >
-                        구매 신청
-                      </button>
-                    </div>
-                    {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
-                  </div>
-                )}
-                {!isEventEnded && (
-                  <div className="mt-4 sm:mt-6">
-                    {/* <h2 className="text-lg font-semibold mb-2">원하는 가격 제안하기</h2> */}
-                    <div className="space-y-2">
-                      <input
-                        type="number"
-                        value={suggestedPrice}
-                        onChange={(e) => setSuggestedPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                        className="border rounded-full px-4 py-2 w-full"
-                        placeholder="원하는 가격 입력"
-                      />
-                      <input
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="border rounded-full px-4 py-2 w-full"
-                        placeholder="전화번호 입력 (예: 01012345678)"
-                      />
-                      <button
-                        onClick={suggestPrice}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
-                      >
-                        제안하기
-                      </button>
-                    </div>
-                    {message && <p className="mt-2 text-sm text-red-600">{message}</p>}
-                  </div>
-                )}
                 <Link href="/" className="block text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors">
                   홈으로 돌아가기
                 </Link>
+
+                
                 
                 <div className="mt-8 w-full aspect-square relative">
                   <Image
@@ -312,6 +265,30 @@ export default function FruitDetail() {
                     className="rounded-lg"
                   />
                 </div>
+                {/* 추가 설명 테이블 */}
+              <table className="min-w-full bg-white">
+                <thead>
+                  <tr>
+                    <th className="py-2 px-4 bg-gray-200 text-left text-sm font-semibold text-gray-700">항목</th>
+                    <th className="py-2 px-4 bg-gray-200 text-left text-sm font-semibold text-gray-700">내용</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-2 px-4 border-b border-gray-200">원산지</td>
+                    <td className="py-2 px-4 border-b border-gray-200">경주 하늘내 농원 (국내산)</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4 border-b border-gray-200">보관 방법</td>
+                    <td className="py-2 px-4 border-b border-gray-200">냉장 보관</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4 border-b border-gray-200">유통 기한</td>
+                    <td className="py-2 px-4 border-b border-gray-200">구매 후 7일</td>
+                  </tr>
+                  {/* 추가적인 설명 항목을 여기에 추가할 수 있습니다 */}
+                </tbody>
+              </table>
               </div>
             </div>
           </div>
