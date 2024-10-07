@@ -256,7 +256,7 @@ export default function FruitDetail() {
                         </button>
                       </div>
                     ) : isPurchaseConfirmed ? (
-                      <p className="text-center text-green-600 font-semibold">구매가 완료되��습니다!</p>
+                      <p className="text-center text-green-600 font-semibold">구매가 완료되었습니다!</p>
                     ) : (
                       <p className="text-center text-blue-600 font-semibold">랜덤 박스를 선택해주세요!</p>
                     )}
