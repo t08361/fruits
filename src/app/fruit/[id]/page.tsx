@@ -83,7 +83,7 @@ export default function FruitDetail() {
       return
     }
     setIsPhoneVerified(true)
-    setMessage('전화���호가 확인되었습니다. 랜덤 박스를 선택해주세요.')
+    setMessage('전화번호가 확인되었습니다. 랜덤 박스를 선택해주세요.')
   }
 
   const selectBox = async (index: number) => {
