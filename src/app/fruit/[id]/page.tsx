@@ -195,9 +195,9 @@ export default function FruitDetail() {
               
               <div className="space-y-4">
                 <div className="flex flex-col items-center my-4">
-                  <p className={`text-sm mb-2 ${isBoxesRevealed ? 'text-gray-600' : 'text-red-600 font-bold'}`}>
+                  <p className={`text-sm mb-2 font-bold ${isBoxesRevealed ? 'text-red-600' : 'text-red-600'}`}>
                     {isBoxesRevealed 
-                      ? `${selectedPrice?.toLocaleString()}원에 당첨되었습니다!` 
+                      ? `원래 가격보다 ${fruit.price - selectedPrice!}원 더 저렴하게 구매할 수 있습니다!`
                       : isPhoneVerified
                         ? "원하시는 랜덤 박스를 선택해주세요!"
                         : "전화번호를 입력하시면 랜덤박스를 오픈할 기회가 주어집니다!"}

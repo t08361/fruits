@@ -56,7 +56,7 @@ export default function Home() {
       <main className="p-4">
         <h2 className="text-lg font-semibold mb-4 text-center text-gray-800">산지 직송 상품만을 취급합니다.</h2>
         {fruits.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-2 gap-4"> {/* 여기를 수정했습니다 */}
             {fruits.map((fruit) => (
               <Link href={`/fruit/${fruit.id}`} key={fruit.id} className="block">
                 <div className="bg-white rounded-lg overflow-hidden shadow-md transition-transform hover:scale-105 cursor-pointer">
