@@ -10,7 +10,6 @@
         },
       ],
     },
-    assetPrefix: '.',
   }
 
   module.exports = nextConfig
