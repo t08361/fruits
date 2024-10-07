@@ -4,13 +4,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'  // 'useRouter' 대신 'useParams'만 사용
+import { useParams } from 'next/navigation'
 
 interface Fruit {
   id: number
   name: string
   price: number
-  stock: number
   image_url: string
   image_url_2: string
   description: string
@@ -33,17 +32,27 @@ export default function FruitDetail() {
 
   const fetchFruit = useCallback(async () => {
     if (id) {
-      const { data, error } = await supabase
-        .from('fruits')
-        .select('*')
-        .eq('id', id)
-        .single()
-      
-      if (error) {
-        console.error('Error fetching fruit:', error)
-      } else {
-        setFruit(data)
+      try {
+        const { data, error } = await supabase
+          .from('fruits')
+          .select('*')
+          .eq('id', id)
+          .single()
+        
+        if (error) {
+          console.error('Error fetching fruit:', error)
+          setMessage('과일 정보를 불러오는 중 오류가 발생했습니다.')
+        } else {
+          console.log('Fetched fruit:', data)
+          setFruit(data)
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching fruit:', error)
+        setMessage('예기치 못한 오류가 발생했습니다.')
       }
+    } else {
+      console.warn('No ID found in params')
+      setMessage('유효하지 않은 과일 ID입니다.')
     }
   }, [id, supabase])
 
@@ -52,7 +61,10 @@ export default function FruitDetail() {
   }, [fetchFruit])
 
   const calculateDiscountedPrices = useCallback(() => {
-    if (!fruit) return ['?', '?', '?', '?', '?']
+    if (!fruit) {
+      console.warn('Fruit data is not available for calculating prices')
+      return ['?', '?', '?', '?', '?']
+    }
     const originalPrice = fruit.price
     const discounts = [1, 0.95, 0.92, 0.90, 0.88, 0.97]
     const discountedPrices = discounts.map(discount => 
@@ -71,7 +83,7 @@ export default function FruitDetail() {
       return
     }
     setIsPhoneVerified(true)
-    setMessage('전화번호가 확인되었습니다. 랜덤 박스를 선택해주세요.')
+    setMessage('전화���호가 확인되었습니다. 랜덤 박스를 선택해주세요.')
   }
 
   const selectBox = async (index: number) => {
@@ -121,15 +133,19 @@ export default function FruitDetail() {
         setIsPurchaseConfirmed(true)
       }
     } catch (error) {
-      console.error('Unexpected error:', error)
+      console.error('Unexpected error during purchase confirmation:', error)
       setMessage('예기치 못한 오류가 발생했습니다. 다시 시도해 주세요.')
     }
   }
 
   const getImageUrl = (path: string) => {
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`;
-    console.log('Image URL:', url);
-    return url;
+    if (!path) {
+      console.warn('Image path is not available')
+      return '/images/placeholder-fruit.jpg'
+    }
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`
+    console.log('Image URL:', url)
+    return url
   }
 
   if (!id) {
@@ -157,7 +173,7 @@ export default function FruitDetail() {
           <div className="md:flex md:flex-col md:items-center">
             <div className="w-full aspect-square relative">
               <Image
-                src={getImageUrl(fruit.image_url) || '/images/placeholder-fruit.jpg'}
+                src={getImageUrl(fruit.image_url)}
                 alt={fruit.name}
                 layout="fill"
                 objectFit="cover"
@@ -240,7 +256,7 @@ export default function FruitDetail() {
                         </button>
                       </div>
                     ) : isPurchaseConfirmed ? (
-                      <p className="text-center text-green-600 font-semibold">구매가 완료되었습니다!</p>
+                      <p className="text-center text-green-600 font-semibold">구매가 완료되��습니다!</p>
                     ) : (
                       <p className="text-center text-blue-600 font-semibold">랜덤 박스를 선택해주세요!</p>
                     )}
@@ -255,7 +271,7 @@ export default function FruitDetail() {
                 
                 <div className="mt-8 w-full aspect-square relative">
                   <Image
-                    src={getImageUrl(fruit.image_url_2) || '/images/placeholder-fruit-2.jpg'}
+                    src={getImageUrl(fruit.image_url_2)}
                     alt={`${fruit.name} 추가 이미지`}
                     layout="fill"
                     objectFit="cover"

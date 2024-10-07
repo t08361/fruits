@@ -9,7 +9,6 @@ interface Fruit {
   id: number
   name: string
   price: number
-  stock: number
   image_url: string
   participants: number
   created_at: string
@@ -23,7 +22,6 @@ export default function Home() {
     const { data, error } = await supabase
       .from('fruits')
       .select('*')
-      .gt('stock', 0)
       .order('created_at', { ascending: false })
     if (error) {
       console.error('Error fetching fruits:', error)
@@ -73,7 +71,6 @@ export default function Home() {
                   <div className="p-4">
                     <h3 className="text-lg font-semibold mb-2 text-gray-800">{fruit.name}</h3>
                     <p className="text-base text-gray-600 mb-1">가격: {fruit.price.toLocaleString()}원</p>
-                    <p className="text-sm text-gray-500">선착순: {fruit.stock}명</p>
                   </div>
                 </div>
               </Link>
