@@ -184,7 +184,6 @@ export default function FruitDetail() {
               {fruit.description && (
                 <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description}</p>
               )}
-              
               <div className="flex justify-between items-center mb-1 sm:mb-2">
                 <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
                 <div className="text-xs text-gray-600">
@@ -192,7 +191,6 @@ export default function FruitDetail() {
                   <p>네이버 평균가: 28000원</p>
                 </div>
               </div>
-              
               <div className="space-y-4">
                 <div className="flex flex-col items-center my-4">
                   <p className={`text-sm mb-2 font-bold ${isBoxesRevealed ? 'text-red-600' : 'text-red-600'}`}>
@@ -202,28 +200,46 @@ export default function FruitDetail() {
                         ? "원하시는 랜덤 박스를 선택해주세요!"
                         : "전화번호를 입력하시면 랜덤박스를 오픈할 기회가 주어집니다!"}
                   </p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {boxValues.map((value, index) => (
-                      <button
-                        key={index}
-                        onClick={() => selectBox(index)}
-                        disabled={!isPhoneVerified || isBoxesRevealed}
-                        className={`w-16 h-16 ${  // 여기서 w-20 h-20을 w-16 h-16으로 변경했습니다
-                          isBoxesRevealed && value === selectedPrice?.toLocaleString() 
-                            ? 'bg-green-500' 
-                            : isPhoneVerified && !isBoxesRevealed
-                              ? 'bg-yellow-400 hover:bg-yellow-500'
-                              : 'bg-gray-300'
-                        } rounded-lg shadow-md flex items-center justify-center text-base font-bold text-white transition-colors`}  // text-lg를 text-base로 변경했습니다
-                      >
-                        {value}
-                      </button>
-                    ))}
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex justify-center gap-2">
+                      {boxValues.slice(0, 2).map((value, index) => (
+                        <button
+                          key={index}
+                          onClick={() => selectBox(index)}
+                          disabled={!isPhoneVerified || isBoxesRevealed}
+                          className={`w-20 h-20 ${  // 여기를 w-16 h-16에서 w-20 h-20으로 변경
+                            isBoxesRevealed && value === selectedPrice?.toLocaleString() 
+                              ? 'bg-green-500' 
+                              : isPhoneVerified && !isBoxesRevealed
+                                ? 'bg-yellow-400 hover:bg-yellow-500'
+                                : 'bg-gray-300'
+                          } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}  // text-base를 text-lg로 변경
+                        >
+                          {value}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex justify-center gap-2">
+                      {boxValues.slice(2, 5).map((value, index) => (
+                        <button
+                          key={index + 2}
+                          onClick={() => selectBox(index + 2)}
+                          disabled={!isPhoneVerified || isBoxesRevealed}
+                          className={`w-20 h-20 ${  // 여기도 w-16 h-16에서 w-20 h-20으로 변경
+                            isBoxesRevealed && value === selectedPrice?.toLocaleString() 
+                              ? 'bg-green-500' 
+                              : isPhoneVerified && !isBoxesRevealed
+                                ? 'bg-yellow-400 hover:bg-yellow-500'
+                                : 'bg-gray-300'
+                          } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}  // text-base를 text-lg로 변경
+                        >
+                          {value}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-
                 <div className="mt-4 sm:mt-6">
-                 
                   <div className="space-y-2">
                     <input
                       type="tel"
@@ -266,9 +282,6 @@ export default function FruitDetail() {
                 <Link href="/" className="block text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors">
                   홈으로 돌아가기
                 </Link>
-
-                
-                
                 <div className="mt-8 w-full aspect-square relative">
                   <Image
                     src={getImageUrl(fruit.image_url_2)}
