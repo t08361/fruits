@@ -208,13 +208,13 @@ export default function FruitDetail() {
                         key={index}
                         onClick={() => selectBox(index)}
                         disabled={!isPhoneVerified || isBoxesRevealed}
-                        className={`w-20 h-20 ${
+                        className={`w-16 h-16 ${  // 여기서 w-20 h-20을 w-16 h-16으로 변경했습니다
                           isBoxesRevealed && value === selectedPrice?.toLocaleString() 
                             ? 'bg-green-500' 
                             : isPhoneVerified && !isBoxesRevealed
                               ? 'bg-yellow-400 hover:bg-yellow-500'
                               : 'bg-gray-300'
-                        } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
+                        } rounded-lg shadow-md flex items-center justify-center text-base font-bold text-white transition-colors`}  // text-lg를 text-base로 변경했습니다
                       >
                         {value}
                       </button>
