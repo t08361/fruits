@@ -30,7 +30,7 @@ export default function FruitDetail() {
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false)
   const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
-  const [activeSearch, setActiveSearch] = useState<'coupang' | 'naver' | null>(null)
+  const [activeSearch, setActiveSearch] = useState<'naver' | null>(null)
   const [showPurchaseMessage, setShowPurchaseMessage] = useState(false)
   const supabase = createClientComponentClient()
   const params = useParams()
@@ -159,8 +159,6 @@ export default function FruitDetail() {
   const getSearchUrl = (portal: string, fruitName: string) => {
     const encodedName = encodeURIComponent(fruitName);
     switch (portal) {
-      case 'coupang':
-        return `https://www.coupang.com/np/search?component=&q=${encodedName}&channel=user`;
       case 'naver':
         return `https://search.shopping.naver.com/search/all?query=${encodedName}`;
       default:
@@ -329,13 +327,7 @@ export default function FruitDetail() {
               </div>
               
               {/* 검색 섹션 */}
-              <div ref={searchSectionRef} className="mt-4 mb-4 flex justify-center space-x-4">
-                <button
-                  onClick={() => setActiveSearch('coupang')}
-                  className={`px-4 py-2 rounded-full ${activeSearch === 'coupang' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                >
-                  쿠팡에서 검색
-                </button>
+              <div ref={searchSectionRef} className="mt-4 mb-4 flex justify-center">
                 <button
                   onClick={() => setActiveSearch('naver')}
                   className={`px-4 py-2 rounded-full ${activeSearch === 'naver' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
@@ -346,9 +338,9 @@ export default function FruitDetail() {
               {activeSearch && (
                 <div className="h-[600px] border border-gray-300 rounded-lg overflow-hidden">
                   <iframe
-                    src={getSearchUrl(activeSearch, fruit?.name || '')}
+                    src={getSearchUrl('naver', fruit?.name || '')}
                     className="w-full h-full"
-                    title={`${activeSearch} search results`}
+                    title="네이버 검색 결과"
                   />
                 </div>
               )}
