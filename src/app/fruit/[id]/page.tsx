@@ -108,13 +108,13 @@ export default function FruitDetail() {
     }
 
     // 가격을 문자열로 변환합니다
-    let stringPrices = prices.map(price => price.toLocaleString())
+    const stringPrices = prices.map(price => price.toLocaleString())
 
     // 가격에 가중치를 부여합니다 (높은 가격에 더 높은 가중치)
     const weights = prices.map((price, index) => index + 1)
 
     // 가중치를 적용하여 가격을 섞습니다
-    let weightedPrices: string[] = []
+    const weightedPrices: string[] = []
     while (stringPrices.length > 0) {
       const selectedIndex = weightedRandomSelect(weights)
       weightedPrices.push(stringPrices[selectedIndex])
