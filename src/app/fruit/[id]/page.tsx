@@ -80,7 +80,7 @@ export default function FruitDetail() {
     }
     const originalPrice = fruit.price
     const discounts = [1, 0.97, 0.92, 0.90, 0.99, 0.93]
-    let prices = discounts.map(discount => Math.round(originalPrice * discount))
+    let prices: number[] = discounts.map(discount => Math.round(originalPrice * discount))
 
     // 가격을 정렬합니다 (내림차순)
     prices.sort((a, b) => b - a)
@@ -108,8 +108,35 @@ export default function FruitDetail() {
     }
 
     // 가격을 문자열로 변환합니다
-    return prices.map(price => price.toLocaleString())
+    let stringPrices = prices.map(price => price.toLocaleString())
+
+    // 가격에 가중치를 부여합니다 (높은 가격에 더 높은 가중치)
+    const weights = prices.map((price, index) => index + 1)
+
+    // 가중치를 적용하여 가격을 섞습니다
+    let weightedPrices: string[] = []
+    while (stringPrices.length > 0) {
+      const selectedIndex = weightedRandomSelect(weights)
+      weightedPrices.push(stringPrices[selectedIndex])
+      stringPrices.splice(selectedIndex, 1)
+      weights.splice(selectedIndex, 1)
+    }
+
+    return weightedPrices
   }, [fruit])
+
+  // 가중치를 적용한 랜덤 선택 함수
+  const weightedRandomSelect = (weights: number[]): number => {
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0)
+    let random = Math.random() * totalWeight
+    for (let i = 0; i < weights.length; i++) {
+      random -= weights[i]
+      if (random <= 0) {
+        return i
+      }
+    }
+    return weights.length - 1 // 만약을 위한 기본값
+  }
 
   useEffect(() => {
     if (fruit) {
@@ -239,9 +266,12 @@ export default function FruitDetail() {
                 </div>
                 <div className="space-y-4">
                   <div className="flex flex-col items-center my-4">
-                    <p className={`text-sm mb-2 font-bold ${isBoxesRevealed ? 'text-red-600' : 'text-red-600'}`}>
+                    <p className={`text-sm mb-2 font-bold text-red-600`}>
                       {isBoxesRevealed 
-                        ? `원래 가격보다 ${fruit!.price - selectedPrice!}원 더 저렴하게 구매할 수 있습니다!`
+                        ? <>
+                      
+                            {fruit!.price - selectedPrice!}원 더 저렴하게 구매할 수 있습니다!
+                          </>
                         : "원하시는 랜덤 박스를 선택해주세요!"}
                     </p>
                     <div className="flex flex-col items-center gap-2">
