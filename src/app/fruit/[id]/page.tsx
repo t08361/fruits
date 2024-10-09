@@ -160,9 +160,9 @@ export default function FruitDetail() {
     const encodedName = encodeURIComponent(fruitName);
     switch (portal) {
       case 'coupang':
-        return `https://m.coupang.com/nm/search?q=${encodedName}`;
+        return `https://www.coupang.com/np/search?component=&q=${encodedName}&channel=user`;
       case 'naver':
-        return `https://m.search.naver.com/search.naver?query=${encodedName}&where=m`;
+        return `https://search.shopping.naver.com/search/all?query=${encodedName}`;
       default:
         return '#';
     }
@@ -192,7 +192,7 @@ export default function FruitDetail() {
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="md:flex">
             <div className="md:w-1/2">
-              <div className="w-full aspect-square relative">
+              <div className="w-full aspect-[8/7] relative">
                 <Image
                   src={getImageUrl(fruit.image_url)}
                   alt={fruit.name}
@@ -308,7 +308,7 @@ export default function FruitDetail() {
                   </tr>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">보관 방법</td>
-                    <td className="py-2 px-4 border-b border-gray-200">{fruit.storage_method || '정보 없음'}</td>
+                    <td className="py-2 px-4 border-b border-gray-200">{fruit.storage_method || '정보 없'}</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">유통 기한</td>
@@ -318,7 +318,7 @@ export default function FruitDetail() {
               </table>
               
               {/* 두 번째 이미지 */}
-              <div className="w-full aspect-square relative">
+              <div className="w-full aspect-[4/3] relative mt-4">
                 <Image
                   src={getImageUrl(fruit.image_url_2)}
                   alt={`${fruit.name} 추가 이미지`}
