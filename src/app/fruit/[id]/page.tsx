@@ -25,7 +25,7 @@ export default function FruitDetail() {
   const [fruit, setFruit] = useState<Fruit | null>(null)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [message, setMessage] = useState('')
-  const [boxValues, setBoxValues] = useState<string[]>(['?', '?', '?', '?', '?'])
+  const [boxValues, setBoxValues] = useState<string[]>(['?', '?', '?', '?', '?', '?'])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false)
@@ -60,7 +60,7 @@ export default function FruitDetail() {
         }
       } catch (error) {
         console.error('Unexpected error fetching fruit:', error)
-        setMessage('예기치 못한 오류가 발생했습니다.')
+        setMessage('예기치 못한 오류��� 발생했습니다.')
       }
     } else {
       console.warn('No ID found in params')
@@ -75,10 +75,10 @@ export default function FruitDetail() {
   const calculateDiscountedPrices = useCallback(() => {
     if (!fruit) {
       console.warn('Fruit data is not available for calculating prices')
-      return ['?', '?', '?', '?', '?']
+      return ['?', '?', '?', '?', '?', '?']
     }
     const originalPrice = fruit.price
-    const discounts = [1, 0.95, 0.92, 0.90, 0.88, 0.97]
+    const discounts = [1, 0.97, 0.92, 0.90, 0.99, 0.93, 0.91]  // 0.91 추가
     const discountedPrices = discounts.map(discount => 
       Math.round(originalPrice * discount).toLocaleString()
     )
@@ -86,7 +86,7 @@ export default function FruitDetail() {
       const j = Math.floor(Math.random() * (i + 1));
       [discountedPrices[i], discountedPrices[j]] = [discountedPrices[j], discountedPrices[i]];
     }
-    return discountedPrices.slice(0, 5)
+    return discountedPrices.slice(0, 6)  // 6개로 변경
   }, [fruit])
 
   const selectBox = async (index: number) => {
@@ -100,9 +100,8 @@ export default function FruitDetail() {
     const selectedPriceNumber = parseInt(selectedPriceString, 10)
     setSelectedPrice(selectedPriceNumber)
 
-    const newBoxValues = ['?', '?', '?', '?', '?']
-    newBoxValues[index] = discountedPrices[index]
-    setBoxValues(newBoxValues)
+    // 모든 박스의 값을 보이게 설정
+    setBoxValues(discountedPrices)
     
     setIsBoxesRevealed(true)
     setMessage(`${selectedPriceNumber.toLocaleString()}원에 당첨되었습니다! 구매하시겠습니까?`)
@@ -114,7 +113,7 @@ export default function FruitDetail() {
 
   const confirmPurchase = async () => {
     if (!selectedPrice || !fruit || !phoneNumber) {
-      setMessage('전화번호를 입력해주세요.')
+      setMessage('화번호를 입력해주세요.')
       return
     }
 
@@ -221,17 +220,17 @@ export default function FruitDetail() {
                     </p>
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex justify-center gap-2">
-                        {boxValues.slice(0, 2).map((value, index) => (
+                        {boxValues.slice(0, 3).map((value, index) => (
                           <button
                             key={index}
                             onClick={() => selectBox(index)}
                             disabled={isBoxesRevealed}
                             className={`w-20 h-20 ${
-                              isBoxesRevealed && value !== '?' 
-                                ? 'bg-green-500' 
-                                : isBoxesRevealed
-                                  ? 'bg-gray-300'
-                                  : 'bg-yellow-400 hover:bg-yellow-500'
+                              isBoxesRevealed
+                                ? value === selectedPrice?.toLocaleString()
+                                  ? 'bg-green-500'
+                                  : 'bg-gray-300'
+                                : 'bg-yellow-400 hover:bg-yellow-500'
                             } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
                           >
                             <span className={value === '?' && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
@@ -241,17 +240,17 @@ export default function FruitDetail() {
                         ))}
                       </div>
                       <div className="flex justify-center gap-2">
-                        {boxValues.slice(2, 5).map((value, index) => (
+                        {boxValues.slice(3, 6).map((value, index) => (
                           <button
-                            key={index + 2}
-                            onClick={() => selectBox(index + 2)}
+                            key={index + 3}
+                            onClick={() => selectBox(index + 3)}
                             disabled={isBoxesRevealed}
                             className={`w-20 h-20 ${
-                              isBoxesRevealed && value !== '?' 
-                                ? 'bg-green-500' 
-                                : isBoxesRevealed
-                                  ? 'bg-gray-300'
-                                  : 'bg-yellow-400 hover:bg-yellow-500'
+                              isBoxesRevealed
+                                ? value === selectedPrice?.toLocaleString()
+                                  ? 'bg-green-500'
+                                  : 'bg-gray-300'
+                                : 'bg-yellow-400 hover:bg-yellow-500'
                             } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
                           >
                             <span className={value === '?' && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
@@ -302,11 +301,17 @@ export default function FruitDetail() {
                   </tr>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">배송</td>
-                    <td className="py-2 px-4 border-b border-gray-200">{fruit.shipping || '정보 없음'}</td>
+                    <td className="py-2 px-4 border-b border-gray-200">
+                      {fruit.shipping === '무료배송' ? (
+                        <span className="text-green-500 font-bold">{fruit.shipping}</span>
+                      ) : (
+                        fruit.shipping || '정보 없음'
+                      )}
+                    </td>
                   </tr>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">보관 방법</td>
-                    <td className="py-2 px-4 border-b border-gray-200">{fruit.storage_method || '정보 없'}</td>
+                    <td className="py-2 px-4 border-b border-gray-200">{fruit.storage_method || '정보 없음'}</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">유통 기한</td>
@@ -357,7 +362,7 @@ export default function FruitDetail() {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="border rounded-full px-4 py-2 w-full mb-4"
-              placeholder="전화번호 입력 (예: 01012345678)"
+              placeholder="예시: 01012345678"
             />
             <div className="flex justify-end space-x-2">
               <button
