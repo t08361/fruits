@@ -32,6 +32,7 @@ export default function FruitDetail() {
   const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const [activeSearch, setActiveSearch] = useState<'naver' | null>(null)
   const [showPurchaseMessage, setShowPurchaseMessage] = useState(false)
+  const [discountedPrices, setDiscountedPrices] = useState<string[]>([])
   const supabase = createClientComponentClient()
   const params = useParams()
   const id = params?.id
@@ -60,7 +61,7 @@ export default function FruitDetail() {
         }
       } catch (error) {
         console.error('Unexpected error fetching fruit:', error)
-        setMessage('예기치 못한 오류��� 발생했습니다.')
+        setMessage('예기치 못한 오류 발생했습니다.')
       }
     } else {
       console.warn('No ID found in params')
@@ -78,16 +79,43 @@ export default function FruitDetail() {
       return ['?', '?', '?', '?', '?', '?']
     }
     const originalPrice = fruit.price
-    const discounts = [1, 0.97, 0.92, 0.90, 0.99, 0.93, 0.91]  // 0.91 추가
-    const discountedPrices = discounts.map(discount => 
-      Math.round(originalPrice * discount).toLocaleString()
-    )
-    for (let i = discountedPrices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [discountedPrices[i], discountedPrices[j]] = [discountedPrices[j], discountedPrices[i]];
+    const discounts = [1, 0.97, 0.92, 0.90, 0.99, 0.93]
+    let prices = discounts.map(discount => Math.round(originalPrice * discount))
+
+    // 가격을 정렬합니다 (내림차순)
+    prices.sort((a, b) => b - a)
+
+    // 가격을 조정합니다
+    let differentDigitIndex = -1
+    for (let i = 0; i < prices[0].toString().length; i++) {
+      if (new Set(prices.map(p => p.toString()[i])).size > 1) {
+        differentDigitIndex = i
+        break
+      }
     }
-    return discountedPrices.slice(0, 6)  // 6개로 변경
+
+    if (differentDigitIndex !== -1) {
+      const digitsAtDiffIndex = prices.map(p => parseInt(p.toString()[differentDigitIndex]))
+      const minDigitAtDiffIndex = Math.min(...digitsAtDiffIndex)
+      const pricesWithMinDigit = prices.filter(p => parseInt(p.toString()[differentDigitIndex]) === minDigitAtDiffIndex)
+
+      if (pricesWithMinDigit.length === 1) {
+        const minPrice = pricesWithMinDigit[0]
+        const roundUpDigit = Math.pow(10, prices[0].toString().length - differentDigitIndex - 1)
+        const roundedMinPrice = Math.ceil(minPrice / roundUpDigit) * roundUpDigit
+        prices = prices.map(p => p === minPrice ? roundedMinPrice : p)
+      }
+    }
+
+    // 가격을 문자열로 변환합니다
+    return prices.map(price => price.toLocaleString())
   }, [fruit])
+
+  useEffect(() => {
+    if (fruit) {
+      setDiscountedPrices(calculateDiscountedPrices())
+    }
+  }, [fruit, calculateDiscountedPrices])
 
   const selectBox = async (index: number) => {
     if (isBoxesRevealed) {
@@ -95,12 +123,10 @@ export default function FruitDetail() {
       return
     }
 
-    const discountedPrices = calculateDiscountedPrices()
     const selectedPriceString = discountedPrices[index].replace(',', '')
     const selectedPriceNumber = parseInt(selectedPriceString, 10)
     setSelectedPrice(selectedPriceNumber)
 
-    // 모든 박스의 값을 보이게 설정
     setBoxValues(discountedPrices)
     
     setIsBoxesRevealed(true)
