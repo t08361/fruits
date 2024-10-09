@@ -56,10 +56,10 @@ export default function Home() {
       <main className="p-4">
         <h2 className="text-lg font-semibold mb-4 text-center text-gray-800">산지 직송 상품만을 취급합니다.</h2>
         {fruits.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4"> {/* 여기를 수정했습니다 */}
+          <div className="grid grid-cols-2 gap-4">
             {fruits.map((fruit) => (
               <Link href={`/fruit/${fruit.id}`} key={fruit.id} className="block">
-                <div className="bg-white rounded-lg overflow-hidden shadow-md transition-transform hover:scale-105 cursor-pointer">
+                <div className="bg-white rounded-lg overflow-hidden shadow-md transition-transform hover:scale-105 cursor-pointer h-full flex flex-col">
                   <div className="relative aspect-square">
                     <Image
                       src={getImageUrl(fruit.image_url)}
@@ -68,9 +68,9 @@ export default function Home() {
                       objectFit="cover"
                     />
                   </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold mb-2 text-gray-800">{fruit.name}</h3>
-                    <p className="text-base text-gray-600 mb-1">가격: {fruit.price.toLocaleString()}원</p>
+                  <div className="p-4 flex flex-col justify-between flex-grow">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800 line-clamp-2">{fruit.name}</h3>
+                    <p className="text-base text-gray-600">가격: {fruit.price.toLocaleString()}원</p>
                   </div>
                 </div>
               </Link>

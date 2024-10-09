@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -15,6 +15,10 @@ interface Fruit {
   description: string
   participants: number
   created_at: string
+  origin: string
+  storage_method: string
+  expiration_date: string
+  shipping: string
 }
 
 export default function FruitDetail() {
@@ -24,11 +28,19 @@ export default function FruitDetail() {
   const [boxValues, setBoxValues] = useState<string[]>(['?', '?', '?', '?', '?'])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false)
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false)
   const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
+  const [activeSearch, setActiveSearch] = useState<'coupang' | 'naver' | null>(null)
+  const [showPurchaseMessage, setShowPurchaseMessage] = useState(false)
   const supabase = createClientComponentClient()
   const params = useParams()
   const id = params?.id
+
+  const searchSectionRef = useRef<HTMLDivElement>(null)
+
+  const scrollToSearchSection = () => {
+    searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const fetchFruit = useCallback(async () => {
     if (id) {
@@ -77,21 +89,7 @@ export default function FruitDetail() {
     return discountedPrices.slice(0, 5)
   }, [fruit])
 
-  const verifyPhone = () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      setMessage('유효한 전화번호를 입력해주세요.')
-      return
-    }
-    setIsPhoneVerified(true)
-    setMessage('전화번호가 확인되었습니다. 랜덤 박스를 선택해주세요.')
-  }
-
   const selectBox = async (index: number) => {
-    if (!isPhoneVerified) {
-      setMessage('먼저 전화번호를 입력하고 확인해주세요.')
-      return
-    }
-
     if (isBoxesRevealed) {
       setMessage('이미 선택하셨습니다.')
       return
@@ -102,15 +100,23 @@ export default function FruitDetail() {
     const selectedPriceNumber = parseInt(selectedPriceString, 10)
     setSelectedPrice(selectedPriceNumber)
 
-    const newBoxValues = [...boxValues]
+    const newBoxValues = ['?', '?', '?', '?', '?']
     newBoxValues[index] = discountedPrices[index]
     setBoxValues(newBoxValues)
+    
     setIsBoxesRevealed(true)
     setMessage(`${selectedPriceNumber.toLocaleString()}원에 당첨되었습니다! 구매하시겠습니까?`)
   }
 
+  const openPhoneModal = () => {
+    setIsPhoneModalOpen(true)
+  }
+
   const confirmPurchase = async () => {
-    if (!selectedPrice || !fruit) return
+    if (!selectedPrice || !fruit || !phoneNumber) {
+      setMessage('전화번호를 입력해주세요.')
+      return
+    }
 
     try {
       const { data, error } = await supabase
@@ -129,8 +135,10 @@ export default function FruitDetail() {
         setMessage(`구매 신청 중 오류가 발생했습니다: ${error.message}`)
       } else {
         console.log('Submitted price suggestion:', data)
-        setMessage('구매가 완료되었습니다. 문자드리겠습니다!')
+        setShowPurchaseMessage(true)
         setIsPurchaseConfirmed(true)
+        setIsPhoneModalOpen(false)
+        // 타이머 제거
       }
     } catch (error) {
       console.error('Unexpected error during purchase confirmation:', error)
@@ -147,6 +155,18 @@ export default function FruitDetail() {
     console.log('Image URL:', url)
     return url
   }
+
+  const getSearchUrl = (portal: string, fruitName: string) => {
+    const encodedName = encodeURIComponent(fruitName);
+    switch (portal) {
+      case 'coupang':
+        return `https://m.coupang.com/nm/search?q=${encodedName}`;
+      case 'naver':
+        return `https://m.search.naver.com/search.naver?query=${encodedName}&where=m`;
+      default:
+        return '#';
+    }
+  };
 
   if (!id) {
     return <div>유효하지 않은 과일 ID입니다.</div>
@@ -170,129 +190,107 @@ export default function FruitDetail() {
       </header>
       <div className="p-4 sm:p-8">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="md:flex md:flex-col md:items-center">
-            <div className="w-full aspect-square relative">
-              <Image
-                src={getImageUrl(fruit.image_url)}
-                alt={fruit.name}
-                layout="fill"
-                objectFit="cover"
-              />
-            </div>
-            <div className="p-4 sm:p-8 w-full">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{fruit.name}</h1>
-              {fruit.description && (
-                <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description}</p>
-              )}
-              <div className="flex justify-between items-center mb-1 sm:mb-2">
-                <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
-                <div className="text-xs text-gray-600">
-                  <p>쿠팡 평균가: 27000원</p>
-                  <p>네이버 평균가: 28000원</p>
-                </div>
+          <div className="md:flex">
+            <div className="md:w-1/2">
+              <div className="w-full aspect-square relative">
+                <Image
+                  src={getImageUrl(fruit.image_url)}
+                  alt={fruit.name}
+                  layout="fill"
+                  objectFit="cover"
+                />
               </div>
-              <div className="space-y-4">
-                <div className="flex flex-col items-center my-4">
-                  <p className={`text-sm mb-2 font-bold ${isBoxesRevealed ? 'text-red-600' : 'text-red-600'}`}>
-                    {isBoxesRevealed 
-                      ? `원래 가격보다 ${fruit.price - selectedPrice!}원 더 저렴하게 구매할 수 있습니다!`
-                      : isPhoneVerified
-                        ? "원하시는 랜덤 박스를 선택해주세요!"
-                        : "전화번호를 입력하시면 랜덤박스를 오픈할 기회가 주어집니다!"}
-                  </p>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex justify-center gap-2">
-                      {boxValues.slice(0, 2).map((value, index) => (
-                        <button
-                          key={index}
-                          onClick={() => selectBox(index)}
-                          disabled={!isPhoneVerified || isBoxesRevealed}
-                          className={`w-20 h-20 ${  // 여기를 w-16 h-16에서 w-20 h-20으로 변경
-                            isBoxesRevealed && value === selectedPrice?.toLocaleString() 
-                              ? 'bg-green-500' 
-                              : isPhoneVerified && !isBoxesRevealed
-                                ? 'bg-yellow-400 hover:bg-yellow-500'
-                                : 'bg-gray-300'
-                          } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}  // text-base를 text-lg로 변경
-                        >
-                          {value}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex justify-center gap-2">
-                      {boxValues.slice(2, 5).map((value, index) => (
-                        <button
-                          key={index + 2}
-                          onClick={() => selectBox(index + 2)}
-                          disabled={!isPhoneVerified || isBoxesRevealed}
-                          className={`w-20 h-20 ${  // 여기도 w-16 h-16에서 w-20 h-20으로 변경
-                            isBoxesRevealed && value === selectedPrice?.toLocaleString() 
-                              ? 'bg-green-500' 
-                              : isPhoneVerified && !isBoxesRevealed
-                                ? 'bg-yellow-400 hover:bg-yellow-500'
-                                : 'bg-gray-300'
-                          } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}  // text-base를 text-lg로 변경
-                        >
-                          {value}
-                        </button>
-                      ))}
+              <div className="p-4 sm:p-8 w-full">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{fruit.name}</h1>
+                {fruit.description && (
+                  <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description}</p>
+                )}
+                <div className="flex justify-between items-center mb-1 sm:mb-2">
+                  <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
+                  <button
+                    onClick={scrollToSearchSection}
+                    className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                  >
+                    가격 비교하러 가기
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-col items-center my-4">
+                    <p className={`text-sm mb-2 font-bold ${isBoxesRevealed ? 'text-red-600' : 'text-red-600'}`}>
+                      {isBoxesRevealed 
+                        ? `원래 가격보다 ${fruit!.price - selectedPrice!}원 더 저렴하게 구매할 수 있습니다!`
+                        : "원하시는 랜덤 박스를 선택해주세요!"}
+                    </p>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex justify-center gap-2">
+                        {boxValues.slice(0, 2).map((value, index) => (
+                          <button
+                            key={index}
+                            onClick={() => selectBox(index)}
+                            disabled={isBoxesRevealed}
+                            className={`w-20 h-20 ${
+                              isBoxesRevealed && value !== '?' 
+                                ? 'bg-green-500' 
+                                : isBoxesRevealed
+                                  ? 'bg-gray-300'
+                                  : 'bg-yellow-400 hover:bg-yellow-500'
+                            } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
+                          >
+                            <span className={value === '?' && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
+                              {value}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-center gap-2">
+                        {boxValues.slice(2, 5).map((value, index) => (
+                          <button
+                            key={index + 2}
+                            onClick={() => selectBox(index + 2)}
+                            disabled={isBoxesRevealed}
+                            className={`w-20 h-20 ${
+                              isBoxesRevealed && value !== '?' 
+                                ? 'bg-green-500' 
+                                : isBoxesRevealed
+                                  ? 'bg-gray-300'
+                                  : 'bg-yellow-400 hover:bg-yellow-500'
+                            } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
+                          >
+                            <span className={value === '?' && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
+                              {value}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="mt-4 sm:mt-6">
-                  <div className="space-y-2">
-                    <input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="border rounded-full px-4 py-2 w-full"
-                      placeholder="전화번호 입력 (예: 01012345678)"
-                      disabled={isPhoneVerified}
-                    />
-                    {!isPhoneVerified ? (
-                      <button
-                        onClick={verifyPhone}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
-                      >
-                        전화번호 입력하고 랜덤박스 열기
-                      </button>
-                    ) : isBoxesRevealed && !isPurchaseConfirmed ? (
-                      <div className="flex space-x-2">
+                  <div className="mt-4 sm:mt-6">
+                    <div className="space-y-2">
+                      {isBoxesRevealed && !isPurchaseConfirmed && (
                         <button
-                          onClick={confirmPurchase}
-                          className="flex-1 bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                          onClick={openPhoneModal}
+                          className="w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
                         >
                           구매하기
                         </button>
-                        <button
-                          onClick={() => setMessage('구매를 취소하셨습니다.')}
-                          className="flex-1 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors"
-                        >
-                          취소하기
-                        </button>
-                      </div>
-                    ) : isPurchaseConfirmed ? (
-                      <p className="text-center text-green-600 font-semibold">구매가 완료되었습니다!</p>
-                    ) : (
-                      <p className="text-center text-blue-600 font-semibold">랜덤 박스를 선택해주세요!</p>
-                    )}
+                      )}
+                      {showPurchaseMessage && (
+                        <p className="text-center text-green-600 font-semibold animate-slide-lr-10s">
+                          구매가 완료되었습니다. 문자드리겠습니다!
+                        </p>
+                      )}
+                    </div>
+                    {message && !isPurchaseConfirmed && <p className="mt-2 text-sm text-gray-600">{message}</p>}
                   </div>
-                  {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
+                  <Link href="/" className="block text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors mt-4">
+                    홈으로 돌아가기
+                  </Link>
                 </div>
-                <Link href="/" className="block text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors">
-                  홈으로 돌아가기
-                </Link>
-                <div className="mt-8 w-full aspect-square relative">
-                  <Image
-                    src={getImageUrl(fruit.image_url_2)}
-                    alt={`${fruit.name} 추가 이미지`}
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-lg"
-                  />
-                </div>
-                {/* 추가 설명 테이블 */}
-              <table className="min-w-full bg-white">
+              </div>
+            </div>
+            <div className="md:w-1/2 p-4">
+              {/* 추가 설명 테이블 */}
+              <table className="min-w-full bg-white mb-4">
                 <thead>
                   <tr>
                     <th className="py-2 px-4 bg-gray-200 text-left text-sm font-semibold text-gray-700">항목</th>
@@ -302,24 +300,90 @@ export default function FruitDetail() {
                 <tbody>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">원산지</td>
-                    <td className="py-2 px-4 border-b border-gray-200">경주 하늘내 농원 (국내산)</td>
+                    <td className="py-2 px-4 border-b border-gray-200">{fruit.origin || '정보 없음'}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4 border-b border-gray-200">배송</td>
+                    <td className="py-2 px-4 border-b border-gray-200">{fruit.shipping || '정보 없음'}</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">보관 방법</td>
-                    <td className="py-2 px-4 border-b border-gray-200">냉장 보관</td>
+                    <td className="py-2 px-4 border-b border-gray-200">{fruit.storage_method || '정보 없음'}</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-4 border-b border-gray-200">유통 기한</td>
-                    <td className="py-2 px-4 border-b border-gray-200">구매 후 7일</td>
+                    <td className="py-2 px-4 border-b border-gray-200">{fruit.expiration_date || '정보 없음'}</td>
                   </tr>
-                  {/* 추가적인 설명 항목을 여기에 추가할 수 있습니다 */}
                 </tbody>
               </table>
+              
+              {/* 두 번째 이미지 */}
+              <div className="w-full aspect-square relative">
+                <Image
+                  src={getImageUrl(fruit.image_url_2)}
+                  alt={`${fruit.name} 추가 이미지`}
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded-lg"
+                />
               </div>
+              
+              {/* 검색 섹션 */}
+              <div ref={searchSectionRef} className="mt-4 mb-4 flex justify-center space-x-4">
+                <button
+                  onClick={() => setActiveSearch('coupang')}
+                  className={`px-4 py-2 rounded-full ${activeSearch === 'coupang' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                >
+                  쿠팡에서 검색
+                </button>
+                <button
+                  onClick={() => setActiveSearch('naver')}
+                  className={`px-4 py-2 rounded-full ${activeSearch === 'naver' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                >
+                  네이버에서 검색
+                </button>
+              </div>
+              {activeSearch && (
+                <div className="h-[600px] border border-gray-300 rounded-lg overflow-hidden">
+                  <iframe
+                    src={getSearchUrl(activeSearch, fruit?.name || '')}
+                    className="w-full h-full"
+                    title={`${activeSearch} search results`}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+      {isPhoneModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg">
+            <h2 className="text-lg font-bold mb-4">전화번호를 입력해주세요</h2>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="border rounded-full px-4 py-2 w-full mb-4"
+              placeholder="전화번호 입력 (예: 01012345678)"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsPhoneModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 rounded-full"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmPurchase}
+                className="px-4 py-2 bg-green-500 text-white rounded-full"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
