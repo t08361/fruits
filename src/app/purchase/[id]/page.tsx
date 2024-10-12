@@ -15,9 +15,11 @@ interface Fruit {
 interface User {
   id: string
   email: string
-  name: string
-  phone: string
-  address: string
+  user_metadata?: {
+    name?: string
+    phone?: string
+    address?: string
+  }
 }
 
 interface Coupon {
@@ -37,7 +39,7 @@ export default function PurchasePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const id = params?.id
-  const selectedPrice = searchParams.get('price')
+  const selectedPrice = searchParams ? searchParams.get('price') : null
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,7 +64,7 @@ export default function PurchasePage() {
       }
       setUser(userData as User)
 
-      // 쿠폰 정보 가져오기 (예시 데이터)
+      // 쿠폰 정��� 가져오기 (예시 데이터)
       setCoupons([
         { id: 1, name: '10% 할인 쿠폰', discount: 10 },
         { id: 2, name: '5% 할인 쿠폰', discount: 5 },
@@ -111,10 +113,10 @@ export default function PurchasePage() {
             <div>
               <h3 className="text-lg font-medium text-gray-900">구매자 정보</h3>
               <div className="mt-2">
-                <p className="text-sm text-gray-500">이름: {user.name}</p>
+                <p className="text-sm text-gray-500">이름: {user.user_metadata?.name || '이름 없음'}</p>
                 <p className="text-sm text-gray-500">이메일: {user.email}</p>
-                <p className="text-sm text-gray-500">전화번호: {user.phone}</p>
-                <p className="text-sm text-gray-500">주소: {user.address}</p>
+                <p className="text-sm text-gray-500">전화번호: {user.user_metadata?.phone || '전화번호 없음'}</p>
+                <p className="text-sm text-gray-500">주소: {user.user_metadata?.address || '주소 없음'}</p>
               </div>
             </div>
             <div>
