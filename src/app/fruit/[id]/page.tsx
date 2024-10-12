@@ -323,10 +323,10 @@ export default function FruitDetail() {
                     <div className="space-y-2">
                       {isBoxesRevealed && !isPurchaseConfirmed && (
                         <button
-                          onClick={openLoginModal}
+                          onClick={user ? confirmPurchase : openLoginModal}
                           className="w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
                         >
-                          {user ? '구매하기' : '간편 로그인'}
+                          {user ? '구매 확인' : '간편 로그인'}
                         </button>
                       )}
                       {showPurchaseMessage && (
