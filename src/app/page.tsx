@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
+import { User } from '@supabase/supabase-js'
 
 interface Fruit {
   id: number
@@ -16,6 +17,7 @@ interface Fruit {
 
 export default function Home() {
   const [fruits, setFruits] = useState<Fruit[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const supabase = createClientComponentClient()
 
   const fetchFruits = useCallback(async () => {
@@ -30,9 +32,33 @@ export default function Home() {
     }
   }, [supabase])
 
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'kakao',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    if (error) console.error('Error logging in:', error)
+  }
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) console.error('Error logging out:', error)
+  }
+
   useEffect(() => {
     fetchFruits()
-  }, [fetchFruits])
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [fetchFruits, supabase])
 
   const getImageUrl = (path: string) => {
     if (!path) return '/images/placeholder-fruit.jpg'
@@ -44,13 +70,29 @@ export default function Home() {
       <header className="bg-white shadow-md sticky top-0 z-10 p-4">
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-green-600">신선마켓 몽당몽당열매</h1>
-          <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-            </svg>
-          </a>
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <Link href="/profile" className="text-green-600 hover:text-green-700">
+                  프로필
+                </Link>
+                <button onClick={handleLogout} className="text-green-600 hover:text-green-700">
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <button onClick={handleLogin} className="text-green-600 hover:text-green-700">
+                카카오 로그인
+              </button>
+            )}
+            <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+          </div>
         </div>
       </header>
       <main className="p-4">

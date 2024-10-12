@@ -11,5 +11,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
+  // 로그인 후 홈페이지로 리다이렉트
   return NextResponse.redirect(requestUrl.origin)
 }
