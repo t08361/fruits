@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
+import { User } from '@supabase/supabase-js'
 
 interface Fruit {
   id: number
@@ -23,18 +24,19 @@ interface Fruit {
 
 export default function FruitDetail() {
   const [fruit, setFruit] = useState<Fruit | null>(null)
-  const [phoneNumber, setPhoneNumber] = useState('')
   const [message, setMessage] = useState('')
   const [boxValues, setBoxValues] = useState<string[]>(['?', '?', '?', '?', '?', '?'])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
-  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const [activeSearch, setActiveSearch] = useState<'naver' | null>(null)
   const [showPurchaseMessage, setShowPurchaseMessage] = useState(false)
   const [discountedPrices, setDiscountedPrices] = useState<string[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const supabase = createClientComponentClient()
   const params = useParams()
+  const router = useRouter()
   const id = params?.id
 
   const searchSectionRef = useRef<HTMLDivElement>(null)
@@ -71,7 +73,16 @@ export default function FruitDetail() {
 
   useEffect(() => {
     fetchFruit()
-  }, [fetchFruit])
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [fetchFruit, supabase])
 
   const calculateDiscountedPrices = useCallback(() => {
     if (!fruit) {
@@ -160,41 +171,32 @@ export default function FruitDetail() {
     setMessage(`${selectedPriceNumber.toLocaleString()}원에 당첨되었습니다! 구매하시겠습니까?`)
   }
 
-  const openPhoneModal = () => {
-    setIsPhoneModalOpen(true)
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'kakao',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=/purchase/${id}?price=${selectedPrice}`
+      }
+    })
+    if (error) console.error('Error logging in:', error)
+    setIsLoginModalOpen(false)
   }
 
-  const confirmPurchase = async () => {
-    if (!selectedPrice || !fruit || !phoneNumber) {
-      setMessage('화번호를 입력해주세요.')
-      return
+  const openLoginModal = () => {
+    if (user) {
+      router.push(`/purchase/${id}?price=${selectedPrice}`)
+    } else {
+      setIsLoginModalOpen(true)
     }
+  }
 
-    try {
-      const { data, error } = await supabase
-        .from('price_suggestions')
-        .insert([
-          { 
-            fruit_id: id, 
-            suggested_price: selectedPrice,
-            phone_number: phoneNumber,
-            fruit_name: fruit.name
-          }
-        ])
-
-      if (error) {
-        console.error('Error submitting price suggestion:', error)
-        setMessage(`구매 신청 중 오류가 발생했습니다: ${error.message}`)
-      } else {
-        console.log('Submitted price suggestion:', data)
-        setShowPurchaseMessage(true)
-        setIsPurchaseConfirmed(true)
-        setIsPhoneModalOpen(false)
-        // 타이머 제거
-      }
-    } catch (error) {
-      console.error('Unexpected error during purchase confirmation:', error)
-      setMessage('예기치 못한 오류가 발생했습니다. 다시 시도해 주세요.')
+  const confirmPurchase = () => {
+    if (user) {
+      setIsPurchaseConfirmed(true)
+      setShowPurchaseMessage(true)
+      setTimeout(() => setShowPurchaseMessage(false), 10000)
+    } else {
+      setIsLoginModalOpen(true)
     }
   }
 
@@ -321,10 +323,10 @@ export default function FruitDetail() {
                     <div className="space-y-2">
                       {isBoxesRevealed && !isPurchaseConfirmed && (
                         <button
-                          onClick={openPhoneModal}
+                          onClick={openLoginModal}
                           className="w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
                         >
-                          구매하기
+                          {user ? '구매하기' : '간편 로그인'}
                         </button>
                       )}
                       {showPurchaseMessage && (
@@ -409,29 +411,23 @@ export default function FruitDetail() {
           </div>
         </div>
       </div>
-      {isPhoneModalOpen && (
+      {isLoginModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg">
-            <h2 className="text-lg font-bold mb-4">전화번호를 입력해주세요</h2>
-            <input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="border rounded-full px-4 py-2 w-full mb-4"
-              placeholder="예시: 01012345678"
-            />
+            <h2 className="text-lg font-bold mb-4">로그인이 필요합니다</h2>
+            <p className="mb-4">구매를 진행하려면 로그인해주세요.</p>
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => setIsPhoneModalOpen(false)}
+                onClick={() => setIsLoginModalOpen(false)}
                 className="px-4 py-2 bg-gray-300 rounded-full"
               >
                 취소
               </button>
               <button
-                onClick={confirmPurchase}
+                onClick={handleLogin}
                 className="px-4 py-2 bg-green-500 text-white rounded-full"
               >
-                확인
+                카카오 로그인
               </button>
             </div>
           </div>
