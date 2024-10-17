@@ -51,7 +51,7 @@ export default function PurchasePage() {
   const searchParams = useSearchParams()
   const id = params?.id
   const [pendingCoupons, setPendingCoupons] = useState<Coupon[]>([])
-  const [shippingFee, setShippingFee] = useState(3000); // 기본 배송비 상태 추가
+  const [shippingFee] = useState(3000); // setShippingFee 제거
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,7 +119,7 @@ export default function PurchasePage() {
 
   const calculateDiscountedPrice = (price: number, coupons: Coupon[]) => {
     let discountedPrice = price;
-    let discountSteps: string[] = [];
+    const discountSteps: string[] = [];  // const로 변경
     let totalDiscount = 0;
     let isShippingFree = false;
 
