@@ -44,7 +44,7 @@ export default function PurchasePage() {
   const [user, setUser] = useState<User | null>(null)
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
-  const [paymentMethod] = useState<string>('무통장 입금') // 결제 방법을 무통장 입금으로 고정
+  const [paymentMethod] = useState<string>('무통장 ���금') // 결제 방법을 무통장 입금으로 고정
   const supabase = createClientComponentClient()
   const params = useParams()
   const router = useRouter()
@@ -213,7 +213,7 @@ export default function PurchasePage() {
 
         if (error) {
           console.error(`쿠폰 "${coupon.name}" 사용 중 오류:`, error);
-          throw new Error(`쿠폰 "${coupon.name}" ��용 중 오류가 발생했습니다.`);
+          throw new Error(`쿠폰 "${coupon.name}" 용 중 오류가 발생했습니다.`);
         }
       }
 
@@ -300,6 +300,19 @@ export default function PurchasePage() {
       console.error('Failed to copy text: ', err)
     })
   }
+
+  const openTossApp = () => {
+    // 토스 앱으로 이동하는 URL
+    const tossAppUrl = 'supertoss://';
+    // 토스 웹사이트 URL (앱이 설치되어 있지 않은 경우를 위한 대체 URL)
+    const tossWebUrl = 'https://toss.im';
+
+    // 먼저 앱으로 이동을 시도하고, 실패하면 웹사이트로 이동
+    setTimeout(() => {
+      window.location.href = tossWebUrl;
+    }, 500);
+    window.location.href = tossAppUrl;
+  };
 
   if (!fruit || !user) {
     return <div>로딩 중...</div>
@@ -470,9 +483,12 @@ export default function PurchasePage() {
                 <p>로 {finalPrice.toLocaleString()}원 입금해주시면</p>
                 <p>구매가 완료됩니다.</p>
                 <p>입금 확인 후 물건 보내드리겠습니다.</p>
-                <Link href="/" className="mt-4 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                  홈으로 돌아가기
-                </Link>
+                <button
+                  onClick={openTossApp}
+                  className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  토스로 이동하여 송금하기
+                </button>
               </div>
             ) : (
               isProfileComplete && (
