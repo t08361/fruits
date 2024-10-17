@@ -40,20 +40,16 @@ export default function FruitDetail() {
   ])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const [activeSearch, setActiveSearch] = useState<'naver' | null>(null)
-  const [showPurchaseMessage, setShowPurchaseMessage] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const supabase = createClientComponentClient()
   const params = useParams()
   const router = useRouter()
   const id = params?.id
-
-  const searchSectionRef = useRef<HTMLDivElement>(null)
-
   const [openedBoxes, setOpenedBoxes] = useState<number[]>([])
-  const [revealedCoupons, setRevealedCoupons] = useState<Coupon[]>([])
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
+  const [revealedCoupons, setRevealedCoupons] = useState<Coupon[]>([])
+  const searchSectionRef = useRef<HTMLDivElement>(null);
 
   const fetchFruit = useCallback(async () => {
     if (id) {
@@ -316,7 +312,7 @@ export default function FruitDetail() {
                       </div>
                     </div>
                   </div>
-                  {isBoxesRevealed && !isPurchaseConfirmed && (
+                  {isBoxesRevealed && (
                     <div className="mt-4 text-center">
                       <p className="text-lg font-semibold text-green-600">
                         선택된 쿠폰: {selectedCoupons.map(coupon => coupon.name).join(', ')}
@@ -330,14 +326,7 @@ export default function FruitDetail() {
                     </div>
                   )}
                   <div className="mt-4 sm:mt-6">
-                    <div className="space-y-2">
-                      {showPurchaseMessage && (
-                        <p className="text-center text-green-600 font-semibold animate-slide-lr-10s">
-                          구매가 완료되었습니다. 문자드리겠습니다!
-                        </p>
-                      )}
-                    </div>
-                    {message && !isPurchaseConfirmed && <p className="mt-2 text-sm text-gray-600">{message}</p>}
+                    {message && !isBoxesRevealed && <p className="mt-2 text-sm text-gray-600">{message}</p>}
                   </div>
                   <Link href="/" className="block text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors mt-4">
                     홈으로 돌아가기
