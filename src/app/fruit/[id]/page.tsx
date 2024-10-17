@@ -22,12 +22,24 @@ interface Fruit {
   shipping: string
 }
 
+interface Coupon {
+  name: string;
+  value: string;
+}
+
 export default function FruitDetail() {
   const [fruit, setFruit] = useState<Fruit | null>(null)
   const [message, setMessage] = useState('')
-  const [boxValues, setBoxValues] = useState<string[]>(['?', '?', '?', '?', '?', '?'])
+  const [boxValues, setBoxValues] = useState<Coupon[]>([
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' }
+  ])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
+  const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const [activeSearch, setActiveSearch] = useState<'naver' | null>(null)
@@ -40,6 +52,10 @@ export default function FruitDetail() {
   const id = params?.id
 
   const searchSectionRef = useRef<HTMLDivElement>(null)
+
+  const [openedBoxes, setOpenedBoxes] = useState<number[]>([])
+  const [revealedCoupons, setRevealedCoupons] = useState<Coupon[]>([])
+  const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
 
   const scrollToSearchSection = () => {
     searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -84,110 +100,60 @@ export default function FruitDetail() {
     return () => subscription.unsubscribe()
   }, [fetchFruit, supabase])
 
-  const calculateDiscountedPrices = useCallback(() => {
+  const calculateCoupons = useCallback(() => {
     if (!fruit) {
-      console.warn('Fruit data is not available for calculating prices')
-      return ['?', '?', '?', '?', '?', '?']
+      console.warn('Fruit data is not available for calculating coupons')
+      return [
+        { name: '?', value: '?' },
+        { name: '?', value: '?' },
+        { name: '?', value: '?' },
+        { name: '?', value: '?' },
+        { name: '?', value: '?' },
+        { name: '?', value: '?' }
+      ]
     }
-    const originalPrice = fruit.price
-    const discounts = [1, 0.97, 0.92, 0.90, 0.99, 0.93]
-    let prices: number[] = discounts.map(discount => Math.round(originalPrice * discount))
-
-    // 가격을 정렬합니다 (내림차순)
-    prices.sort((a, b) => b - a)
-
-    // 가격을 조정합니다
-    let differentDigitIndex = -1
-    for (let i = 0; i < prices[0].toString().length; i++) {
-      if (new Set(prices.map(p => p.toString()[i])).size > 1) {
-        differentDigitIndex = i
-        break
-      }
-    }
-
-    if (differentDigitIndex !== -1) {
-      const digitsAtDiffIndex = prices.map(p => parseInt(p.toString()[differentDigitIndex]))
-      const minDigitAtDiffIndex = Math.min(...digitsAtDiffIndex)
-      const pricesWithMinDigit = prices.filter(p => parseInt(p.toString()[differentDigitIndex]) === minDigitAtDiffIndex)
-
-      if (pricesWithMinDigit.length === 1) {
-        const minPrice = pricesWithMinDigit[0]
-        const roundUpDigit = Math.pow(10, prices[0].toString().length - differentDigitIndex - 1)
-        const roundedMinPrice = Math.ceil(minPrice / roundUpDigit) * roundUpDigit
-        prices = prices.map(p => p === minPrice ? roundedMinPrice : p)
-      }
-    }
-
-    // 가격을 문자열로 변환합니다
-    const stringPrices = prices.map(price => price.toLocaleString())
-
-    // 가격에 가중치를 부여합니다 (높은 가격에 더 높은 가중치)
-    const weights = prices.map((price, index) => index + 1)
-
-    // 가중치를 적용하여 가격을 섞습니다
-    const weightedPrices: string[] = []
-    while (stringPrices.length > 0) {
-      const selectedIndex = weightedRandomSelect(weights)
-      weightedPrices.push(stringPrices[selectedIndex])
-      stringPrices.splice(selectedIndex, 1)
-      weights.splice(selectedIndex, 1)
-    }
-
-    return weightedPrices
+    const coupons: Coupon[] = [
+      { name: '무료배송', value: '무료배송' },
+      { name: '2000원 할인', value: '2000' },
+      { name: '3000원 할인', value: '3000' },
+      { name: '5% 할인', value: '5%' },
+      { name: '10% 할인', value: '10%' },
+      { name: '1000원 할', value: '1000' }
+    ]
+    return coupons.sort(() => Math.random() - 0.5)
   }, [fruit])
-
-  // 가중치를 적용한 랜덤 선택 함수
-  const weightedRandomSelect = (weights: number[]): number => {
-    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0)
-    let random = Math.random() * totalWeight
-    for (let i = 0; i < weights.length; i++) {
-      random -= weights[i]
-      if (random <= 0) {
-        return i
-      }
-    }
-    return weights.length - 1 // 만약을 위한 기본값
-  }
 
   useEffect(() => {
     if (fruit) {
-      setDiscountedPrices(calculateDiscountedPrices())
+      const calculatedCoupons = calculateCoupons()
+      setBoxValues(calculatedCoupons)
+      setRevealedCoupons(calculatedCoupons)
     }
-  }, [fruit, calculateDiscountedPrices])
+  }, [fruit, calculateCoupons])
 
-  const selectBox = async (index: number) => {
-    if (isBoxesRevealed) {
-      setMessage('이미 선택하셨습니다.')
-      return
-    }
-
-    const selectedPriceString = discountedPrices[index].replace(',', '')
-    const selectedPriceNumber = parseInt(selectedPriceString, 10)
-    setSelectedPrice(selectedPriceNumber)
-
-    setBoxValues(discountedPrices)
+  const selectBox = (index: number) => {
+    if (openedBoxes.length >= 2) return
     
-    setIsBoxesRevealed(true)
-    setMessage(`${selectedPriceNumber.toLocaleString()}원에 당첨되었습니다! 구매하시겠습니까?`)
+    const newOpenedBoxes = [...openedBoxes, index]
+    setOpenedBoxes(newOpenedBoxes)
+    
+    const newSelectedCoupons = [...selectedCoupons, revealedCoupons[index]]
+    setSelectedCoupons(newSelectedCoupons)
+    
+    if (newOpenedBoxes.length === 2) {
+      setIsBoxesRevealed(true)
+    }
   }
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'kakao',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=/purchase/${id}?price=${selectedPrice}`
+        redirectTo: `${window.location.origin}/auth/callback?redirect=/fruit/${id}`
       }
     })
     if (error) console.error('Error logging in:', error)
     setIsLoginModalOpen(false)
-  }
-
-  const openLoginModal = () => {
-    if (user) {
-      router.push(`/purchase/${id}?price=${selectedPrice}`)
-    } else {
-      setIsLoginModalOpen(true)
-    }
   }
 
   const confirmPurchase = () => {
@@ -205,9 +171,10 @@ export default function FruitDetail() {
       console.warn('Image path is not available')
       return '/images/placeholder-fruit.jpg'
     }
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`
-    console.log('Image URL:', url)
-    return url
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path
+    }
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`
   }
 
   const getSearchUrl = (portal: string, fruitName: string) => {
@@ -220,6 +187,45 @@ export default function FruitDetail() {
     }
   };
 
+  const saveCouponsToDatabase = async (coupons: Coupon[]) => {
+    if (!user) return;
+
+    const { error } = await supabase.from('coupons').insert(
+      coupons.map(coupon => ({
+        user_id: user.id,
+        coupon_type: coupon.name,
+        coupon_value: coupon.value,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 후 만료
+      }))
+    );
+
+    if (error) {
+      console.error('Error saving coupons:', error);
+    }
+  };
+
+  const handlePurchase = async () => {
+    if (user) {
+      if (selectedCoupons.length > 0) {
+        const couponParams = encodeURIComponent(encodeURIComponent(JSON.stringify(selectedCoupons)));
+        router.push(`/purchase/${id}?coupons=${couponParams}`);
+      } else {
+        alert('구매하기 전에 랜덤박스를 열어주세요!');
+      }
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Error logging out:', error)
+    } else {
+      router.push('/')  // 로그아웃 후 홈페이지로 리다이렉트
+    }
+  }
+
   if (!id) {
     return <div>유효하지 않은 과일 ID입니다.</div>
   }
@@ -231,19 +237,36 @@ export default function FruitDetail() {
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
           <Link href="/" className="text-2xl sm:text-3xl font-bold text-green-600">신선마켓 몽당몽당열매</Link>
-          <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-            </svg>
-          </a>
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <Link href="/profile" className="text-green-600 hover:text-green-700">
+                  프로필
+                </Link>
+                <button onClick={handleLogout} className="text-green-600 hover:text-green-700">
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <button onClick={handleLogin} className="text-green-600 hover:text-green-700">
+                간편 로그인
+              </button>
+            )}
+            <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+          </div>
         </div>
       </header>
       <div className="p-4 sm:p-8">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="md:flex">
             <div className="md:w-1/2">
+              {/* 이미지 컴포넌트 주석 해제 */}
               <div className="w-full aspect-[8/7] relative">
                 <Image
                   src={getImageUrl(fruit.image_url)}
@@ -271,64 +294,72 @@ export default function FruitDetail() {
                     <p className={`text-sm mb-2 font-bold text-red-600`}>
                       {isBoxesRevealed 
                         ? <>
-                      
-                            {fruit!.price - selectedPrice!}원 더 저렴하게 구매할 수 있습니다!
+                            {selectedCoupon && typeof selectedCoupon.value === 'string' && selectedCoupon.value !== '무료배송'
+                              ? `${(fruit.price - parseInt(selectedCoupon.value)).toLocaleString()}원 더 저렴하게 구매할 수 있습니다!`
+                              : selectedCoupon && selectedCoupon.value === '무료배송'
+                                ? '무료배송 쿠폰이 적용되었습니다!'
+                                : '쿠폰이 적용되었습니다!'}
                           </>
                         : "원하시는 랜덤 박스를 선택해주세요!"}
                     </p>
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex justify-center gap-2">
-                        {boxValues.slice(0, 3).map((value, index) => (
+                        {boxValues.slice(0, 3).map((coupon, index) => (
                           <button
                             key={index}
                             onClick={() => selectBox(index)}
-                            disabled={isBoxesRevealed}
+                            disabled={isBoxesRevealed || openedBoxes.includes(index)}
                             className={`w-20 h-20 ${
-                              isBoxesRevealed
-                                ? value === selectedPrice?.toLocaleString()
-                                  ? 'bg-green-500'
-                                  : 'bg-gray-300'
+                              openedBoxes.includes(index)
+                                ? 'bg-green-500'
+                                : isBoxesRevealed
+                                ? 'bg-gray-300'
                                 : 'bg-yellow-400 hover:bg-yellow-500'
                             } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
                           >
-                            <span className={value === '?' && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
-                              {value}
+                            <span className={!openedBoxes.includes(index) && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
+                              {openedBoxes.includes(index) ? revealedCoupons[index].name : '?'}
                             </span>
                           </button>
                         ))}
                       </div>
                       <div className="flex justify-center gap-2">
-                        {boxValues.slice(3, 6).map((value, index) => (
+                        {boxValues.slice(3).map((coupon, index) => (
                           <button
                             key={index + 3}
                             onClick={() => selectBox(index + 3)}
-                            disabled={isBoxesRevealed}
+                            disabled={isBoxesRevealed || openedBoxes.includes(index + 3)}
                             className={`w-20 h-20 ${
-                              isBoxesRevealed
-                                ? value === selectedPrice?.toLocaleString()
-                                  ? 'bg-green-500'
-                                  : 'bg-gray-300'
+                              openedBoxes.includes(index + 3)
+                                ? 'bg-green-500'
+                                : isBoxesRevealed
+                                ? 'bg-gray-300'
                                 : 'bg-yellow-400 hover:bg-yellow-500'
                             } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
                           >
-                            <span className={value === '?' && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
-                              {value}
+                            <span className={!openedBoxes.includes(index + 3) && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
+                              {openedBoxes.includes(index + 3) ? revealedCoupons[index + 3].name : '?'}
                             </span>
                           </button>
                         ))}
                       </div>
                     </div>
                   </div>
+                  {isBoxesRevealed && !isPurchaseConfirmed && (
+                    <div className="mt-4 text-center">
+                      <p className="text-lg font-semibold text-green-600">
+                        선택된 쿠폰: {selectedCoupons.map(coupon => coupon.name).join(', ')}
+                      </p>
+                      <button
+                        onClick={handlePurchase}
+                        className="mt-2 w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                      >
+                        {user ? '쿠폰 적용하여 구매하기' : '간편 로그인'}
+                      </button>
+                    </div>
+                  )}
                   <div className="mt-4 sm:mt-6">
                     <div className="space-y-2">
-                      {isBoxesRevealed && !isPurchaseConfirmed && (
-                        <button
-                          onClick={user ? confirmPurchase : openLoginModal}
-                          className="w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
-                        >
-                          {user ? '구매 확인' : '간편 로그인'}
-                        </button>
-                      )}
                       {showPurchaseMessage && (
                         <p className="text-center text-green-600 font-semibold animate-slide-lr-10s">
                           구매가 완료되었습니다. 문자드리겠습니다!
@@ -378,7 +409,7 @@ export default function FruitDetail() {
                 </tbody>
               </table>
               
-              {/* 두 번째 이미지 */}
+              {/* 두 번째 이미지도 주석 해제 */}
               <div className="w-full aspect-[4/3] relative mt-4">
                 <Image
                   src={getImageUrl(fruit.image_url_2)}
@@ -427,7 +458,7 @@ export default function FruitDetail() {
                 onClick={handleLogin}
                 className="px-4 py-2 bg-green-500 text-white rounded-full"
               >
-                카카오 로그인
+                간편 로그인
               </button>
             </div>
           </div>

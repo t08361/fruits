@@ -9,6 +9,7 @@ const nextConfig = {
         pathname: '/storage/v1/object/public/fruits/**',
       },
     ],
+    domains: ['localhost'], // 로컬 개발을 위해 추가
   },
 }
 

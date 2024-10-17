@@ -66,10 +66,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100">
-      <header className="bg-white shadow-md sticky top-0 z-10 p-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-green-600">신선마켓 몽당몽당열매</h1>
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow-md">
+        <div className="container mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
+          <Link href="/" className="text-2xl sm:text-3xl font-bold text-green-600">신선마켓 몽당몽당열매</Link>
           <div className="flex items-center space-x-4">
             {user ? (
               <>
@@ -82,7 +82,7 @@ export default function Home() {
               </>
             ) : (
               <button onClick={handleLogin} className="text-green-600 hover:text-green-700">
-                카카오 로그인
+                간편 로그인
               </button>
             )}
             <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
