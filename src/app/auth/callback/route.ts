@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     
     if (!error && data?.user) {
       // 새로운 사용자인지 확인
-      const { data: existingCustomer, error: customerError } = await supabase
+      const { /* data: existingCustomer, */ error: customerError } = await supabase
         .from('customers')
         .select('id, is_first_login')
         .eq('id', data.user.id)
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
   return NextResponse.redirect(`${requestUrl.origin}${redirectTo}`)
 }
 
-async function giveFreeCoupons(supabase, userId: string) {
+async function giveFreeCoupons(supabase: SupabaseClient, userId: string) {
   const coupons = Array(3).fill({
     user_id: userId,
     coupon_type: '무료배송',

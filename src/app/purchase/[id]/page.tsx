@@ -54,7 +54,6 @@ export default function PurchasePage() {
   const [shippingFee] = useState(3000); // setShippingFee 제거
   const [showCoupons, setShowCoupons] = useState(false);
   const [isProfileComplete, setIsProfileComplete] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
   const [editedUser, setEditedUser] = useState({
     phone: '',
     address: '',
@@ -290,7 +289,6 @@ export default function PurchasePage() {
         }
       })
       setIsProfileComplete(true)
-      setIsEditing(false)
     }
   }
 

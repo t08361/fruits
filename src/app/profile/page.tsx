@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
-import Image from 'next/image'
+// import Image from 'next/image'  // 이 줄을 제거하거나 주석 처리
 
 interface Coupon {
   id: string

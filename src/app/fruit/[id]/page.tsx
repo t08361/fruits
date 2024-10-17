@@ -91,6 +91,25 @@ export default function FruitDetail() {
     return () => subscription.unsubscribe()
   }, [fetchFruit, supabase])
 
+  const getRandomNonShippingCoupon = () => {
+    const otherCoupons = [
+      { name: '5000원 할인', value: '5000' },
+      { name: '2800원 할인', value: '2800' },
+      { name: '4800원 할인', value: '4800' },
+      { name: '10% 할인', value: '10%' },
+      { name: '1000원 할인', value: '1000' }
+    ]
+    return otherCoupons[Math.floor(Math.random() * otherCoupons.length)]
+  }
+
+  const getRandomCoupon = () => {
+    if (Math.random() < 0.2) { // 20% 확률로 무료배송 쿠폰
+      return { name: '무료배송', value: '무료배송' }
+    } else {
+      return getRandomNonShippingCoupon()
+    }
+  }
+
   const calculateCoupons = useCallback(() => {
     if (!fruit) {
       console.warn('Fruit data is not available for calculating coupons')
@@ -117,25 +136,6 @@ export default function FruitDetail() {
     // 최종적으로 무작위로 섞기
     return coupons.sort(() => Math.random() - 0.5)
   }, [fruit])
-
-  const getRandomNonShippingCoupon = () => {
-    const otherCoupons = [
-      { name: '5000원 할인', value: '5000' },
-      { name: '2800원 할인', value: '2800' },
-      { name: '4800원 할인', value: '4800' },
-      { name: '10% 할인', value: '10%' },
-      { name: '1000원 할인', value: '1000' }
-    ]
-    return otherCoupons[Math.floor(Math.random() * otherCoupons.length)]
-  }
-
-  const getRandomCoupon = () => {
-    if (Math.random() < 0.2) { // 20% 확률로 무료배송 쿠폰
-      return { name: '무료배송', value: '무료배송' }
-    } else {
-      return getRandomNonShippingCoupon()
-    }
-  }
 
   useEffect(() => {
     if (fruit) {

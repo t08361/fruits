@@ -20,7 +20,7 @@ interface Fruit {
 export default function Home() {
   const [fruits, setFruits] = useState<Fruit[]>([])
   const [user, setUser] = useState<User | null>(null)
-  const [isFirstLogin, setIsFirstLogin] = useState(false)
+  // const [isFirstLogin, setIsFirstLogin] = useState(false)
   const supabase = createClientComponentClient()
 
   const fetchFruits = useCallback(async () => {
@@ -71,7 +71,7 @@ export default function Home() {
   useEffect(() => {
     const checkFirstLogin = async () => {
       if (user) {
-        const { data, error } = await supabase
+        const { /* data, */ error } = await supabase
           .from('customers')
           .select('is_first_login')
           .eq('id', user.id)
@@ -80,7 +80,8 @@ export default function Home() {
         if (error) {
           console.error('Error checking first login:', error)
         } else {
-          setIsFirstLogin(data?.is_first_login || false)
+          // setIsFirstLogin(data?.is_first_login || false)
+          // 이 값을 사용하지 않으므로 주석 처리하거나 제거
         }
       }
     }
