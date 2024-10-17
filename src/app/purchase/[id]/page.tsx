@@ -213,7 +213,7 @@ export default function PurchasePage() {
 
         if (error) {
           console.error(`쿠폰 "${coupon.name}" 사용 중 오류:`, error);
-          throw new Error(`쿠폰 "${coupon.name}" 사용 중 오류가 발생했습니다.`);
+          throw new Error(`쿠폰 "${coupon.name}" ��용 중 오류가 발생했습니다.`);
         }
       }
 
