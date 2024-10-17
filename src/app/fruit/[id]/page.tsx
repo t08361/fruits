@@ -39,12 +39,10 @@ export default function FruitDetail() {
     { name: '?', value: '?' }
   ])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
-  const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const [activeSearch, setActiveSearch] = useState<'naver' | null>(null)
   const [showPurchaseMessage, setShowPurchaseMessage] = useState(false)
-  const [discountedPrices, setDiscountedPrices] = useState<string[]>([])
   const [user, setUser] = useState<User | null>(null)
   const supabase = createClientComponentClient()
   const params = useParams()
@@ -56,10 +54,6 @@ export default function FruitDetail() {
   const [openedBoxes, setOpenedBoxes] = useState<number[]>([])
   const [revealedCoupons, setRevealedCoupons] = useState<Coupon[]>([])
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
-
-  const scrollToSearchSection = () => {
-    searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   const fetchFruit = useCallback(async () => {
     if (id) {
@@ -156,16 +150,6 @@ export default function FruitDetail() {
     setIsLoginModalOpen(false)
   }
 
-  const confirmPurchase = () => {
-    if (user) {
-      setIsPurchaseConfirmed(true)
-      setShowPurchaseMessage(true)
-      setTimeout(() => setShowPurchaseMessage(false), 10000)
-    } else {
-      setIsLoginModalOpen(true)
-    }
-  }
-
   const getImageUrl = (path: string) => {
     if (!path) {
       console.warn('Image path is not available')
@@ -184,23 +168,6 @@ export default function FruitDetail() {
         return `https://search.shopping.naver.com/search/all?query=${encodedName}`;
       default:
         return '#';
-    }
-  };
-
-  const saveCouponsToDatabase = async (coupons: Coupon[]) => {
-    if (!user) return;
-
-    const { error } = await supabase.from('coupons').insert(
-      coupons.map(coupon => ({
-        user_id: user.id,
-        coupon_type: coupon.name,
-        coupon_value: coupon.value,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 후 만료
-      }))
-    );
-
-    if (error) {
-      console.error('Error saving coupons:', error);
     }
   };
 
@@ -225,6 +192,10 @@ export default function FruitDetail() {
       router.push('/')  // 로그아웃 후 홈페이지로 리다이렉트
     }
   }
+
+  const scrollToSearchSection = () => {
+    searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   if (!id) {
     return <div>유효하지 않은 과일 ID입니다.</div>
@@ -294,9 +265,9 @@ export default function FruitDetail() {
                     <p className={`text-sm mb-2 font-bold text-red-600`}>
                       {isBoxesRevealed 
                         ? <>
-                            {selectedCoupon && typeof selectedCoupon.value === 'string' && selectedCoupon.value !== '무료배송'
-                              ? `${(fruit.price - parseInt(selectedCoupon.value)).toLocaleString()}원 더 저렴하게 구매할 수 있습니다!`
-                              : selectedCoupon && selectedCoupon.value === '무료배송'
+                            {selectedCoupons[0] && typeof selectedCoupons[0].value === 'string' && selectedCoupons[0].value !== '무료배송'
+                              ? `${(fruit.price - parseInt(selectedCoupons[0].value)).toLocaleString()}원 더 저렴하게 구매할 수 있습니다!`
+                              : selectedCoupons[0] && selectedCoupons[0].value === '무료배송'
                                 ? '무료배송 쿠폰이 적용되었습니다!'
                                 : '쿠폰이 적용되었습니다!'}
                           </>

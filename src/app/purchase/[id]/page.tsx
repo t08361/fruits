@@ -52,6 +52,7 @@ export default function PurchasePage() {
   const id = params?.id
   const [pendingCoupons, setPendingCoupons] = useState<Coupon[]>([])
   const [shippingFee] = useState(3000); // setShippingFee 제거
+  const [showCoupons, setShowCoupons] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,14 +149,32 @@ export default function PurchasePage() {
   }
 
   const toggleCoupon = (coupon: Coupon) => {
-    setSelectedCoupons(prev => {
-      const existingIndex = prev.findIndex(c => c.id === coupon.id);
-      if (existingIndex !== -1) {
-        // 이미 선택된 쿠폰이면 제거
-        return prev.filter((_, index) => index !== existingIndex);
+    setSelectedCoupons((prevSelected) => {
+      const isAlreadySelected = prevSelected.some((c) => c.id === coupon.id);
+      if (isAlreadySelected) {
+        return prevSelected.filter((c) => c.id !== coupon.id);
       } else {
-        // 선택되지 않은 쿠폰이면 추가
-        return [...prev, coupon];
+        const isDiscountCoupon = coupon.value !== '무료배송';
+        const isShippingCoupon = coupon.value === '무료배송';
+        
+        // 이미 금액 할인 쿠폰이 선택되어 있는지 확인
+        const hasDiscountCoupon = prevSelected.some((c) => c.value !== '무료배송');
+        // 이미 무료배송 쿠폰이 선택되어 있는지 확인
+        const hasShippingCoupon = prevSelected.some((c) => c.value === '무료배송');
+
+        if ((isDiscountCoupon && hasDiscountCoupon) || (isShippingCoupon && hasShippingCoupon)) {
+          // 이미 같은 종류의 쿠폰이 선택되어 있으면 기존 쿠폰을 제거하고 새 쿠폰을 추가
+          return [
+            ...prevSelected.filter((c) => 
+              (isDiscountCoupon && c.value === '무료배송') || 
+              (isShippingCoupon && c.value !== '무료배송')
+            ),
+            coupon
+          ];
+        } else {
+          // 아직 해당 종류의 쿠폰이 선택되지 않았으면 새 쿠폰을 추가
+          return [...prevSelected, coupon];
+        }
       }
     });
   };
@@ -251,23 +270,41 @@ export default function PurchasePage() {
             <div>
               <h3 className="text-lg font-medium text-gray-900">사용 가능한 쿠폰</h3>
               <div className="mt-2">
-                {availableCoupons.length > 0 ? (
-                  availableCoupons.map((coupon) => (
-                    <div key={coupon.id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`coupon-${coupon.id}`}
-                        checked={selectedCoupons.some(c => c.id === coupon.id)}
-                        onChange={() => toggleCoupon(coupon)}
-                        className="form-checkbox h-4 w-4 text-indigo-600"
-                      />
-                      <label htmlFor={`coupon-${coupon.id}`} className="text-sm text-gray-700">
-                        {coupon.name} ({coupon.value})
-                      </label>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500">사용 가능한 쿠폰 없음</p>
+                <button
+                  onClick={() => setShowCoupons(!showCoupons)}
+                  className="w-full text-left px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 flex justify-between items-center"
+                >
+                  <span>사용 가능한 쿠폰 {availableCoupons.length}개</span>
+                  <svg
+                    className={`w-5 h-5 transform transition-transform duration-200 ${showCoupons ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showCoupons && (
+                  <div className="mt-2 space-y-2">
+                    {availableCoupons.length > 0 ? (
+                      availableCoupons.map((coupon) => (
+                        <div key={coupon.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`coupon-${coupon.id}`}
+                            checked={selectedCoupons.some(c => c.id === coupon.id)}
+                            onChange={() => toggleCoupon(coupon)}
+                            className="form-checkbox h-4 w-4 text-indigo-600"
+                          />
+                          <label htmlFor={`coupon-${coupon.id}`} className="text-sm text-gray-700">
+                            {coupon.name} ({coupon.value})
+                          </label>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">사용 가능한 쿠폰 없음</p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
