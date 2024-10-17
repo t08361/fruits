@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
+import Header from '../../../components/Header'
 
 interface Fruit {
   id: number
@@ -93,25 +94,48 @@ export default function FruitDetail() {
   const calculateCoupons = useCallback(() => {
     if (!fruit) {
       console.warn('Fruit data is not available for calculating coupons')
-      return [
-        { name: '?', value: '?' },
-        { name: '?', value: '?' },
-        { name: '?', value: '?' },
-        { name: '?', value: '?' },
-        { name: '?', value: '?' },
-        { name: '?', value: '?' }
-      ]
+      return Array(6).fill({ name: '?', value: '?' })
     }
-    const coupons: Coupon[] = [
-      { name: '무료배송', value: '무료배송' },
+
+    const coupons: Coupon[] = []
+
+    // 첫 번째 박스에 95% 확률로 무료배송 쿠폰 추가
+    if (Math.random() < 0.95) {
+      coupons.push({ name: '무료배송', value: '무료배송' })
+    } else {
+      coupons.push(getRandomNonShippingCoupon())
+    }
+
+    // 두 번째 박스에는 무료배송 쿠폰이 아닌 다른 쿠폰 추가
+    coupons.push(getRandomNonShippingCoupon())
+
+    // 나머지 4개 박스에 랜덤 쿠폰 추가
+    for (let i = 2; i < 6; i++) {
+      coupons.push(getRandomCoupon())
+    }
+
+    // 최종적으로 무작위로 섞기
+    return coupons.sort(() => Math.random() - 0.5)
+  }, [fruit])
+
+  const getRandomNonShippingCoupon = () => {
+    const otherCoupons = [
       { name: '2000원 할인', value: '2000' },
       { name: '3000원 할인', value: '3000' },
       { name: '5% 할인', value: '5%' },
       { name: '10% 할인', value: '10%' },
-      { name: '1000원 할', value: '1000' }
+      { name: '1000원 할인', value: '1000' }
     ]
-    return coupons.sort(() => Math.random() - 0.5)
-  }, [fruit])
+    return otherCoupons[Math.floor(Math.random() * otherCoupons.length)]
+  }
+
+  const getRandomCoupon = () => {
+    if (Math.random() < 0.2) { // 20% 확률로 무료배송 쿠폰
+      return { name: '무료배송', value: '무료배송' }
+    } else {
+      return getRandomNonShippingCoupon()
+    }
+  }
 
   useEffect(() => {
     if (fruit) {
@@ -200,36 +224,9 @@ export default function FruitDetail() {
   if (!fruit) return <div className="text-center py-8">로딩 중...</div>
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100">
-      <header className="bg-white shadow-md sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
-          <Link href="/" className="text-2xl sm:text-3xl font-bold text-green-600">신선마켓 몽당몽당열매</Link>
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <Link href="/profile" className="text-green-600 hover:text-green-700">
-                  프로필
-                </Link>
-                <button onClick={handleLogout} className="text-green-600 hover:text-green-700">
-                  로그아웃
-                </button>
-              </>
-            ) : (
-              <button onClick={handleLogin} className="text-green-600 hover:text-green-700">
-                간편 로그인
-              </button>
-            )}
-            <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-            </a>
-          </div>
-        </div>
-      </header>
-      <div className="p-4 sm:p-8">
+    <div className="min-h-screen bg-green-100">
+      <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="md:flex">
             <div className="md:w-1/2">
@@ -369,7 +366,7 @@ export default function FruitDetail() {
                 </tbody>
               </table>
               
-              {/* 두 번째 이미지도 주석 해제 */}
+              {/* 두 번째 이미지도 주석 제 */}
               <div className="w-full aspect-[4/3] relative mt-4">
                 <Image
                   src={getImageUrl(fruit.image_url_2)}
@@ -406,7 +403,7 @@ export default function FruitDetail() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg">
             <h2 className="text-lg font-bold mb-4">로그인이 필요합니다</h2>
-            <p className="mb-4">구매를 진행하려면 로그인해주세요.</p>
+            <p className="mb-4">구매를 진행하려면 로그인주세요.</p>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setIsLoginModalOpen(false)}
