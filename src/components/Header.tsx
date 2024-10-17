@@ -17,7 +17,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogin, onLogout }) => {
           {user ? (
             <>
               <Link href="/profile" className="text-green-600 hover:text-green-700">
-                프로필
+                나의 주문
               </Link>
               <button onClick={onLogout} className="text-green-600 hover:text-green-700">
                 로그아웃

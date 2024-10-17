@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
@@ -19,6 +20,7 @@ interface Fruit {
 export default function Home() {
   const [fruits, setFruits] = useState<Fruit[]>([])
   const [user, setUser] = useState<User | null>(null)
+  const [isFirstLogin, setIsFirstLogin] = useState(false)
   const supabase = createClientComponentClient()
 
   const fetchFruits = useCallback(async () => {
@@ -66,10 +68,30 @@ export default function Home() {
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`
   }
 
+  useEffect(() => {
+    const checkFirstLogin = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('is_first_login')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Error checking first login:', error)
+        } else {
+          setIsFirstLogin(data?.is_first_login || false)
+        }
+      }
+    }
+
+    checkFirstLogin()
+  }, [user, supabase])
+
   return (
-    <div className="min-h-screen bg-green-100">
+    <div className="min-h-screen bg-gray-100">
       <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
-      <main className="p-4">
+      <main className="container mx-auto px-4 py-8">
         <h2 className="text-lg font-semibold mb-4 text-center text-gray-800">산지 직송 상품만을 취급합니다.</h2>
         {fruits.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">

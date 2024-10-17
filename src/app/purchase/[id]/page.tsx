@@ -44,7 +44,7 @@ export default function PurchasePage() {
   const [user, setUser] = useState<User | null>(null)
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
-  const [paymentMethod, setPaymentMethod] = useState<string>('카카오페이')
+  const [paymentMethod] = useState<string>('무통장 입금') // 결제 방법을 무통장 입금으로 고정
   const supabase = createClientComponentClient()
   const params = useParams()
   const router = useRouter()
@@ -53,6 +53,15 @@ export default function PurchasePage() {
   const [pendingCoupons, setPendingCoupons] = useState<Coupon[]>([])
   const [shippingFee] = useState(3000); // setShippingFee 제거
   const [showCoupons, setShowCoupons] = useState(false);
+  const [isProfileComplete, setIsProfileComplete] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedUser, setEditedUser] = useState({
+    phone: '',
+    address: '',
+  })
+  const [purchaseComplete, setPurchaseComplete] = useState(false)
+  const [finalPrice, setFinalPrice] = useState(0)
+  const [copySuccess, setCopySuccess] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,6 +85,16 @@ export default function PurchasePage() {
         return
       }
       setUser(userData as User)
+      setEditedUser({
+        phone: userData?.user_metadata?.phone || '',
+        address: userData?.user_metadata?.address || '',
+      })
+
+      // 프로필 완성 여부 확인
+      setIsProfileComplete(
+        !!userData?.user_metadata?.phone && 
+        !!userData?.user_metadata?.address
+      )
 
       // 사용자의 사용 가능한 쿠폰 가져오기
       if (userData) {
@@ -116,17 +135,19 @@ export default function PurchasePage() {
     }
 
     fetchData()
-  }, [id, supabase, searchParams])
+  }, [supabase, id, searchParams])
 
   const calculateDiscountedPrice = (price: number, coupons: Coupon[]) => {
     let discountedPrice = price;
-    const discountSteps: string[] = [];  // const로 변경
+    const discountSteps: string[] = [];
     let totalDiscount = 0;
     let isShippingFree = false;
+    let shippingDiscount = 0;
 
     coupons.forEach((coupon, index) => {
       if (coupon.value === '무료배송') {
         isShippingFree = true;
+        shippingDiscount = shippingFee;
         discountSteps.push(`${index + 1}. 무료배송 쿠폰 적용 (-${shippingFee.toLocaleString()}원)`);
       } else if (coupon.value.endsWith('%')) {
         const discountPercentage = parseInt(coupon.value);
@@ -144,6 +165,7 @@ export default function PurchasePage() {
 
     const finalShippingFee = isShippingFree ? 0 : shippingFee;
     const finalPrice = discountedPrice + finalShippingFee;
+    totalDiscount += shippingDiscount; // 배송비 할인을 총 할인 금액에 추가
 
     return { finalPrice, steps: discountSteps, totalDiscount, isShippingFree, finalShippingFee };
   }
@@ -185,36 +207,41 @@ export default function PurchasePage() {
     try {
       // 선택된 쿠폰을 사용한 것으로 표시
       for (const coupon of selectedCoupons) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('coupons')
           .update({ is_used: true, used_at: new Date().toISOString() })
-          .eq('id', coupon.id)  // 쿠폰의 고유 ID로 업데이트
-          .select()
+          .eq('id', coupon.id)
 
         if (error) {
           console.error(`쿠폰 "${coupon.name}" 사용 중 오류:`, error);
           throw new Error(`쿠폰 "${coupon.name}" 사용 중 오류가 발생했습니다.`);
         }
-
-        if (data.length === 0) {
-          throw new Error(`쿠폰 "${coupon.name}"을(를) 찾을 수 없거나 이미 사용되었습니다.`);
-        }
       }
 
+      // 최종 가격 계산
+      const { finalPrice } = calculateDiscountedPrice(fruit.price, selectedCoupons);
+
       // 구매 정보를 데이터베이스에 저장
-      const { error: purchaseError } = await supabase
+      const { data: purchaseData, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
           user_id: user.id,
           fruit_id: fruit.id,
-          price: calculateDiscountedPrice(fruit.price, selectedCoupons).finalPrice,
+          fruit_name: fruit.name,
+          price: finalPrice,
           payment_method: paymentMethod,
-          coupons_used: selectedCoupons.map(c => c.name).join(', ')
-        });
+          coupons_used: selectedCoupons.map(c => c.name).join(', '),
+          shipping_address: user.user_metadata?.address || '',
+          created_at: new Date().toISOString()
+        })
+        .select()
 
       if (purchaseError) {
+        console.error('구매 정보 저장 중 오류:', purchaseError);
         throw new Error('구매 정보 저장 중 오류가 발생했습니다.');
       }
+
+      console.log('구매 정보 저장 성공:', purchaseData);
 
       // 랜덤박스에서 얻은 쿠폰을 데이터베이스에 저장
       for (const coupon of pendingCoupons) {
@@ -227,16 +254,53 @@ export default function PurchasePage() {
         });
 
         if (error) {
-          console.error('Error saving coupon:', error);
+          console.error('쿠폰 저장 중 오류:', error);
         }
       }
 
-      alert('구매가 완료되었습니다!');
-      router.push('/');
+      // 구매 성공 후 상태 업데이트
+      setFinalPrice(finalPrice)
+      setPurchaseComplete(true)
+
     } catch (error) {
       console.error('구매 처리 중 오류 발생:', error);
       alert(error instanceof Error ? error.message : '구매 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
+  }
+
+  const handleEdit = async () => {
+    if (!user) return
+
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        phone: editedUser.phone,
+        address: editedUser.address,
+      }
+    })
+
+    if (error) {
+      console.error('Error updating user:', error)
+      alert('사용자 정보 업데이트 중 오류가 발생했습니다.')
+    } else {
+      setUser({
+        ...user,
+        user_metadata: {
+          ...user.user_metadata,
+          ...editedUser
+        }
+      })
+      setIsProfileComplete(true)
+      setIsEditing(false)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    }, (err) => {
+      console.error('Failed to copy text: ', err)
+    })
   }
 
   if (!fruit || !user) {
@@ -310,20 +374,8 @@ export default function PurchasePage() {
             </div>
             <div>
               <h3 className="text-lg font-medium text-gray-900">결제 방법</h3>
-              <div className="mt-2 space-y-2">
-                {['카카오페이', '네이버페이', '토스'].map((method) => (
-                  <label key={method} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={method}
-                      checked={paymentMethod === method}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                    />
-                    <span className="ml-2 text-sm text-gray-600">{method}</span>
-                  </label>
-                ))}
+              <div className="mt-2">
+                <p className="text-sm text-gray-700">무통장 입금</p>
               </div>
             </div>
           </div>
@@ -368,12 +420,72 @@ export default function PurchasePage() {
               </div>
             )}
             
-            <button
-              onClick={handlePurchase}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              구매하기
-            </button>
+            {!isProfileComplete && (
+              <div className="space-y-4">
+                <p className="text-red-500 font-medium text-sm">
+                  전화번호와 주소를 입력해주셔야 구매가 가능하십니다!
+                </p>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">전화번호</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    value={editedUser.phone}
+                    onChange={(e) => setEditedUser({ ...editedUser, phone: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="전화번호를 입력하세요"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700">배송 주소</label>
+                  <input
+                    type="text"
+                    id="address"
+                    value={editedUser.address}
+                    onChange={(e) => setEditedUser({ ...editedUser, address: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="배송 주소를 입력하세요"
+                  />
+                </div>
+                <button
+                  onClick={handleEdit}
+                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  수정하기
+                </button>
+              </div>
+            )}
+            
+            {purchaseComplete ? (
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
+                <p className="font-bold">구매 성공하였습니다.</p>
+                <p>입금 계좌</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-bold">토스 뱅크 100031749372</p>
+                  <button
+                    onClick={() => copyToClipboard('100031749372')}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
+                  >
+                    {copySuccess ? '복사됨!' : '복사'}
+                  </button>
+                </div>
+                <p>로 {finalPrice.toLocaleString()}원 입금해주시면</p>
+                <p>구매가 완료됩니다.</p>
+                <p>입금 확인 후 물건 보내드리겠습니다.</p>
+                <Link href="/" className="mt-4 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                  홈으로 돌아가기
+                </Link>
+              </div>
+            ) : (
+              isProfileComplete && (
+                <button
+                  onClick={handlePurchase}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  구매하기
+                </button>
+              )
+            )}
           </div>
         </div>
         <div className="px-4 py-5 sm:px-6 flex justify-between">

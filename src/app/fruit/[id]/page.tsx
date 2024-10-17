@@ -100,7 +100,7 @@ export default function FruitDetail() {
     const coupons: Coupon[] = []
 
     // 첫 번째 박스에 95% 확률로 무료배송 쿠폰 추가
-    if (Math.random() < 0.95) {
+    if (Math.random() < 0.99) {
       coupons.push({ name: '무료배송', value: '무료배송' })
     } else {
       coupons.push(getRandomNonShippingCoupon())
@@ -120,9 +120,9 @@ export default function FruitDetail() {
 
   const getRandomNonShippingCoupon = () => {
     const otherCoupons = [
-      { name: '2000원 할인', value: '2000' },
-      { name: '3000원 할인', value: '3000' },
-      { name: '5% 할인', value: '5%' },
+      { name: '5000원 할인', value: '5000' },
+      { name: '2800원 할인', value: '2800' },
+      { name: '4800원 할인', value: '4800' },
       { name: '10% 할인', value: '10%' },
       { name: '1000원 할인', value: '1000' }
     ]
@@ -279,7 +279,7 @@ export default function FruitDetail() {
                                 : isBoxesRevealed
                                 ? 'bg-gray-300'
                                 : 'bg-yellow-400 hover:bg-yellow-500'
-                            } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
+                            } rounded-lg shadow-md flex items-center justify-center text-sm font-bold text-white transition-colors`}
                           >
                             <span className={!openedBoxes.includes(index) && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
                               {openedBoxes.includes(index) ? revealedCoupons[index].name : '?'}
@@ -299,7 +299,7 @@ export default function FruitDetail() {
                                 : isBoxesRevealed
                                 ? 'bg-gray-300'
                                 : 'bg-yellow-400 hover:bg-yellow-500'
-                            } rounded-lg shadow-md flex items-center justify-center text-lg font-bold text-white transition-colors`}
+                            } rounded-lg shadow-md flex items-center justify-center text-sm font-bold text-white transition-colors`}
                           >
                             <span className={!openedBoxes.includes(index + 3) && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
                               {openedBoxes.includes(index + 3) ? revealedCoupons[index + 3].name : '?'}
