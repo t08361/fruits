@@ -1,7 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { SupabaseClient } from '@supabase/supabase-js'
+// import { SupabaseClient } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -10,11 +10,15 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies })
+    await supabase.auth.exchangeCodeForSession(code)
+    
+    // 새로운 사용자 확인 및 무료배송 쿠폰 지급 코드 주석 처리
+    /*
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error && data?.user) {
       // 새로운 사용자인지 확인
-      const { /* data: existingCustomer, */ error: customerError } = await supabase
+      const { error: customerError } = await supabase
         .from('customers')
         .select('id, is_first_login')
         .eq('id', data.user.id)
@@ -29,12 +33,15 @@ export async function GET(request: Request) {
         })
       }
     }
+    */
   }
 
   // 로그인 후 지정된 페이지로 리다이렉트
   return NextResponse.redirect(`${requestUrl.origin}${redirectTo}`)
 }
 
+// giveFreeCoupons 함수도 주석 처리
+/*
 async function giveFreeCoupons(supabase: SupabaseClient, userId: string) {
   const coupons = Array(3).fill({
     user_id: userId,
@@ -50,3 +57,4 @@ async function giveFreeCoupons(supabase: SupabaseClient, userId: string) {
     console.error('Error giving free coupons:', error)
   }
 }
+*/
