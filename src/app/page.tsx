@@ -38,6 +38,7 @@ export default function Home() {
   const [openedBoxes, setOpenedBoxes] = useState<number[]>([])
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
+  const [hasOpenedRandomBox, setHasOpenedRandomBox] = useState(false)
 
   const fetchFruits = useCallback(async () => {
     const { data, error } = await supabase
@@ -70,14 +71,35 @@ export default function Home() {
     fetchFruits()
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        checkRandomBoxStatus(session.user.id)
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        checkRandomBoxStatus(session.user.id)
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [fetchFruits, supabase])
+  }, [supabase, fetchFruits])
+
+  const checkRandomBoxStatus = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('user_events')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('event_type', 'random_box_opened')
+      .single()
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking random box status:', error)
+    } else {
+      setHasOpenedRandomBox(!!data)
+    }
+  }
 
   const getImageUrl = (path: string) => {
     if (!path) return '/images/placeholder-fruit.jpg'
@@ -136,7 +158,7 @@ export default function Home() {
     "난 가격 대비 성능 최고! 너는 너무 비싸서 좀 부담스러워~",
     "너처럼 비싸지 않아도 사람들은 날 충분히 사랑해!",
     "너는 멋지긴 해도, 난 일상에서 항상 함께하는 친구야!",
-    "프리미엄이라고 해서 다 좋은 건 아니야, 내 매력은 실속이야!",
+    "프리미엄이라고 해서 다 좋은 건 아니야, 내 매력은 실속��야!",
     "넌 특별한 날만 등장하지만, 난 언제든 불러주기만 하면 돼!",
     "내가 이렇게 사랑받는 이유는 바로 '합리적 소비'야, 알아두라고!",
     "너는 럭셔리지만 난 편안하게 즐길 수 있는 친근함이 있어!"
@@ -215,26 +237,20 @@ export default function Home() {
   const saveCouponsToDatabase = async () => {
     if (!user) return
 
-    for (const coupon of selectedCoupons) {
-      const { error } = await supabase.from('coupons').insert({
-        user_id: user.id,
-        coupon_type: coupon.name,
-        coupon_value: coupon.value,
-        is_used: false,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30일 후 만료
-      })
-
-      if (error) {
-        console.error('Error saving coupon:', error)
-      }
-    }
-
-    // 랜덤박스 열기 이벤트 기록
-    await supabase.from('user_events').insert({
+    const { error } = await supabase.from('user_events').insert({
       user_id: user.id,
       event_type: 'random_box_opened',
-      created_at: new Date().toISOString()
     })
+
+    if (error) {
+      console.error('Error saving random box event:', error)
+    } else {
+      setHasOpenedRandomBox(true)
+      // 여기에 쿠폰을 데이터베이스에 저장하는 로직 추가
+      // ...
+
+      alert('쿠폰이 성공적으로 저장되었습니다!')
+    }
   }
 
   return (
@@ -249,7 +265,7 @@ export default function Home() {
           </button>
         )}
       </div>
-      {user && !isBoxesRevealed && (
+      {user && !hasOpenedRandomBox && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">랜덤박스 열기</h2>
           <p className="text-gray-600 mb-4">원하는 랜덤박스 2개를 선택해주세요!</p>
@@ -271,7 +287,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      {isBoxesRevealed && (
+      {isBoxesRevealed && !hasOpenedRandomBox && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">축하합니다!</h2>
           <p className="text-gray-600 mb-4">다음 쿠폰을 획득하셨습니다:</p>
