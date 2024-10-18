@@ -38,7 +38,7 @@ export default function Home() {
   const [openedBoxes, setOpenedBoxes] = useState<number[]>([])
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
-  const [hasOpenedRandomBox, setHasOpenedRandomBox] = useState(false)
+  const [hasParticipatedEvent, setHasParticipatedEvent] = useState(false)
 
   const fetchFruits = useCallback(async () => {
     const { data, error } = await supabase
@@ -67,39 +67,38 @@ export default function Home() {
     if (error) console.error('Error logging out:', error)
   }
 
+  const checkEventParticipation = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('is_evented')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      console.error('Error checking event participation:', error)
+    } else {
+      setHasParticipatedEvent(data.is_evented)
+    }
+  }, [supabase])
+
   useEffect(() => {
     fetchFruits()
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        checkRandomBoxStatus(session.user.id)
+        checkEventParticipation(session.user.id)
       }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        checkRandomBoxStatus(session.user.id)
+        checkEventParticipation(session.user.id)
       }
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase, fetchFruits])
-
-  const checkRandomBoxStatus = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_events')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('event_type', 'random_box_opened')
-      .single()
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking random box status:', error)
-    } else {
-      setHasOpenedRandomBox(!!data)
-    }
-  }
+  }, [supabase, fetchFruits, checkEventParticipation])
 
   const getImageUrl = (path: string) => {
     if (!path) return '/images/placeholder-fruit.jpg'
@@ -158,7 +157,7 @@ export default function Home() {
     "난 가격 대비 성능 최고! 너는 너무 비싸서 좀 부담스러워~",
     "너처럼 비싸지 않아도 사람들은 날 충분히 사랑해!",
     "너는 멋지긴 해도, 난 일상에서 항상 함께하는 친구야!",
-    "프리미엄이라고 해서 다 좋은 건 아니야, 내 매력은 실속��야!",
+    "프리미엄이라고 해서 다 좋은 건 아니야, 내 매력은 실속이야!",
     "넌 특별한 날만 등장하지만, 난 언제든 불러주기만 하면 돼!",
     "내가 이렇게 사랑받는 이유는 바로 '합리적 소비'야, 알아두라고!",
     "너는 럭셔리지만 난 편안하게 즐길 수 있는 친근함이 있어!"
@@ -172,7 +171,7 @@ export default function Home() {
     "맛도 중요하지만, 품격은 따라올 수 없지 않겠니?",
     "네가 가성비 좋다지만, 품격은 나를 따라올 수 없지!",
     "난 말 그대로 '프리미엄'이잖아! 모두 날 맛보면 그 차이를 알지!",
-    "그래, 네가 인기 있는 건 인정, 하지만 나만의 고급스러움은 넘볼 수 없다고!",
+    "그래, 네가 인기 있는 건 인정, 하지만 나만의 고급스러움은 넘��� 수 없다고!",
     "넌 대중이라 좋겠지만, 난 선택받은 사람들만 찾는다구!",
     "언젠가는 너도 나처럼 고급지게 변신하고 싶지 않겠니?",
     "난 단 한 입만 먹어봐도 잊을 수 없는 맛을 자랑하지!",
@@ -237,15 +236,15 @@ export default function Home() {
   const saveCouponsToDatabase = async () => {
     if (!user) return
 
-    const { error } = await supabase.from('user_events').insert({
-      user_id: user.id,
-      event_type: 'random_box_opened',
-    })
+    const { error } = await supabase
+      .from('customers')
+      .update({ is_evented: true })
+      .eq('id', user.id)
 
     if (error) {
-      console.error('Error saving random box event:', error)
+      console.error('Error updating event participation:', error)
     } else {
-      setHasOpenedRandomBox(true)
+      setHasParticipatedEvent(true)
       // 여기에 쿠폰을 데이터베이스에 저장하는 로직 추가
       // ...
 
@@ -265,7 +264,7 @@ export default function Home() {
           </button>
         )}
       </div>
-      {user && !hasOpenedRandomBox && (
+      {user && !hasParticipatedEvent && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">랜덤박스 열기</h2>
           <p className="text-gray-600 mb-4">원하는 랜덤박스 2개를 선택해주세요!</p>
@@ -287,7 +286,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      {isBoxesRevealed && !hasOpenedRandomBox && (
+      {isBoxesRevealed && !hasParticipatedEvent && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">축하합니다!</h2>
           <p className="text-gray-600 mb-4">다음 쿠폰을 획득하셨습니다:</p>
