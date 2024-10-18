@@ -94,9 +94,9 @@ export default function FruitDetail() {
   const getRandomCoupon = useCallback(() => {
     const coupons = [
       { name: '무료배송', value: '무료배송' },
-      { name: '10% 할인', value: '10%' },
-      { name: '15% 할인', value: '15%' },
-      { name: '20% 할인', value: '20%' },
+      { name: '700원 할인', value: '700' },
+      { name: '2900원 할인', value: '2900' },
+      { name: '2800원 할인', value: '2800' },
       { name: '1000원 할인', value: '1000' },
       { name: '2000원 할인', value: '2000' },
       { name: '3000원 할인', value: '3000' }

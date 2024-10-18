@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
-// import Image from 'next/image'  // 이 줄을 제거하거나 주석 처리
 import RandomBox from '../../components/RandomBox'
 
 interface Coupon {
@@ -39,7 +38,7 @@ export default function ProfilePage() {
   const [showAllCoupons, setShowAllCoupons] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
   const [copiedTrackingNumber, setCopiedTrackingNumber] = useState<string | null>(null)
-  const [showRandomBox, setShowRandomBox] = useState(true)
+  const [showRandomBox, setShowRandomBox] = useState(false)
 
   useEffect(() => {
     const fetchUserAndData = async () => {
@@ -76,6 +75,20 @@ export default function ProfilePage() {
           console.error('Error fetching purchases:', purchasesError)
         } else {
           setPurchases(purchasesData)
+        }
+
+        // 사용자가 랜덤박스를 열었는지 확인
+        const { data: randomBoxData, error: randomBoxError } = await supabase
+          .from('user_events')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('event_type', 'random_box_opened')
+          .single()
+
+        if (randomBoxError && randomBoxError.code !== 'PGRST116') {
+          console.error('Error checking random box status:', randomBoxError)
+        } else {
+          setShowRandomBox(!randomBoxData)
         }
       }
       setLoading(false)
@@ -161,7 +174,7 @@ export default function ProfilePage() {
     { name: '롯데택배', url: 'https://www.lotteglogis.com/home/reservation/tracking/index' },
   ]
 
-  const handleCouponsReceived = (newCoupons: string[]) => {
+  const handleCouponsReceived = async (newCoupons: string[]) => {
     setCoupons([...coupons, ...newCoupons.map(couponType => ({
       id: Math.random().toString(36).substr(2, 9),
       coupon_type: couponType,
@@ -170,6 +183,17 @@ export default function ProfilePage() {
       is_used: false
     }))])
     setShowRandomBox(false)
+
+    // 랜덤박스 열기 이벤트 기록
+    const { error } = await supabase.from('user_events').insert({
+      user_id: user?.id,
+      event_type: 'random_box_opened',
+      created_at: new Date().toISOString()
+    })
+
+    if (error) {
+      console.error('Error recording random box event:', error)
+    }
   }
 
   if (loading) {
