@@ -51,6 +51,7 @@ export default function FruitDetail() {
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
   const [revealedCoupons, setRevealedCoupons] = useState<Coupon[]>([])
   const searchSectionRef = useRef<HTMLDivElement>(null);
+  const [isBoxOpened, setIsBoxOpened] = useState(false)
 
   const fetchFruit = useCallback(async () => {
     if (id) {
@@ -150,6 +151,7 @@ export default function FruitDetail() {
     
     if (newOpenedBoxes.length === 2) {
       setIsBoxesRevealed(true)
+      setIsBoxOpened(true)
     }
   }
 
@@ -234,7 +236,7 @@ export default function FruitDetail() {
                 />
               </div>
               <div className="p-4 sm:p-8 w-full">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{fruit.name}</h1>
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{fruit.name}</h1>
                 {fruit.description && (
                   <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description}</p>
                 )}
@@ -242,62 +244,50 @@ export default function FruitDetail() {
                   <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
                   <button
                     onClick={scrollToSearchSection}
-                    className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                    className="text-sm bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
                   >
                     가격 비교하러 가기
                   </button>
                 </div>
                 <div className="space-y-4">
                   <div className="flex flex-col items-center my-4">
-                    <p className={`text-sm mb-2 font-bold text-red-600`}>
-                      {isBoxesRevealed 
-                        ? <>
-                            {selectedCoupons[0] && typeof selectedCoupons[0].value === 'string' && selectedCoupons[0].value !== '무료배송'
-                              ? `${(fruit.price - parseInt(selectedCoupons[0].value)).toLocaleString()}원 더 저렴하게 구매할 수 있습니다!`
-                              : selectedCoupons[0] && selectedCoupons[0].value === '무료배송'
-                                ? '무료배송 쿠폰이 적용되었습니다!'
-                                : '쿠폰이 적용되었습니다!'}
-                          </>
-                        : "원하시는 랜덤 박스를 선택해주세요!"}
+                    <p className={`text-sm mb-2 font-bold ${isBoxOpened ? 'text-red-600' : 'text-red-600'}`}>
+                      {isBoxOpened ? "결제 후에 쿠폰을 받아 보세요!" : "랜덤 박스를 열어주세요!"}
                     </p>
                     <div className="flex flex-col items-center gap-2">
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center gap-1">
                         {boxValues.slice(0, 3).map((coupon, index) => (
                           <button
                             key={index}
                             onClick={() => selectBox(index)}
                             disabled={isBoxesRevealed || openedBoxes.includes(index)}
-                            className={`w-20 h-20 ${
+                            className={`w-40 h-10 ${
                               openedBoxes.includes(index)
                                 ? 'bg-green-500'
                                 : isBoxesRevealed
                                 ? 'bg-gray-300'
-                                : 'bg-yellow-400 hover:bg-yellow-500'
-                            } rounded-lg shadow-md flex items-center justify-center text-sm font-bold text-white transition-colors`}
+                                : 'bg-yellow-300 hover:bg-yellow-500'
+                            } rounded-lg shadow-md flex items-center justify-center text-sm font-semibold text-white transition-colors`}
                           >
-                            <span className={!openedBoxes.includes(index) && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
-                              {openedBoxes.includes(index) ? revealedCoupons[index].name : '?'}
-                            </span>
+                            {openedBoxes.includes(index) ? revealedCoupons[index].name : '?'}
                           </button>
                         ))}
                       </div>
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center gap-1">
                         {boxValues.slice(3).map((coupon, index) => (
                           <button
                             key={index + 3}
                             onClick={() => selectBox(index + 3)}
                             disabled={isBoxesRevealed || openedBoxes.includes(index + 3)}
-                            className={`w-20 h-20 ${
+                            className={`w-40 h-10 ${
                               openedBoxes.includes(index + 3)
                                 ? 'bg-green-500'
                                 : isBoxesRevealed
                                 ? 'bg-gray-300'
-                                : 'bg-yellow-400 hover:bg-yellow-500'
-                            } rounded-lg shadow-md flex items-center justify-center text-sm font-bold text-white transition-colors`}
+                                : 'bg-yellow-300 hover:bg-yellow-500'
+                            } rounded-lg shadow-md flex items-center justify-center text-sm font-semibold text-white transition-colors`}
                           >
-                            <span className={!openedBoxes.includes(index + 3) && !isBoxesRevealed ? 'animate-bounce-soft inline-block' : ''}>
-                              {openedBoxes.includes(index + 3) ? revealedCoupons[index + 3].name : '?'}
-                            </span>
+                            {openedBoxes.includes(index + 3) ? revealedCoupons[index + 3].name : '?'}
                           </button>
                         ))}
                       </div>
@@ -312,7 +302,7 @@ export default function FruitDetail() {
                         onClick={handlePurchase}
                         className="mt-2 w-full bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
                       >
-                        {user ? '쿠폰 적용하여 구매하기' : '간편 로그인'}
+                        {user ? '결제하기' : '간편 로그인'}
                       </button>
                     </div>
                   )}

@@ -12,15 +12,15 @@ const Header: React.FC<HeaderProps> = ({ user, onLogin, onLogout }) => {
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
-        <Link href="/" className="text-xl sm:text-2xl font-bold text-green-600">신선마켓 몽당몽당열매</Link>
+        <Link href="/" className="text-lg sm:text-2xl font-bold text-green-600">신선마켓 몽당몽당열매</Link>
         <div className="flex items-center space-x-4">
           {user ? (
             <>
               <Link href="/profile" className="text-green-600 hover:text-green-700">
-                나의 주문
+                <span className="text-sm">나의 주문</span>
               </Link>
               <button onClick={onLogout} className="text-green-600 hover:text-green-700">
-                로그아웃
+                <span className="text-sm">로그아웃</span>
               </button>
             </>
           ) : (
