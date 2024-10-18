@@ -303,7 +303,7 @@ export default function ProfilePage() {
                           : '사용 가능한 쿠폰 없음'}
                       </span>
                       <span className="text-sm text-gray-500">
-                        {showAllCoupons ? '접기' : `총 ${coupons.length}개 쿠폰 보기`}
+                        {showAllCoupons ? '접기' : `총 ${availableCoupons.length}개 쿠폰 보기`}
                       </span>
                     </div>
                     {showAllCoupons && (
@@ -325,7 +325,7 @@ export default function ProfilePage() {
                         )}
                         {usedCoupons.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-1">사용한 쿠폰</h4>
+                            <h4 className="text-sm font-medium text-gray-400 mb-1">사용한 쿠폰</h4>
                             <ul className="space-y-1">
                               {usedCoupons.map((coupon) => (
                                 <li key={coupon.id} className="text-sm text-gray-400">
@@ -365,11 +365,15 @@ export default function ProfilePage() {
               <ul className="divide-y divide-gray-200">
                 {purchases.map((purchase) => (
                   <li key={purchase.id} className="py-4">
-                    <div className="flex justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{purchase.fruit_name}</p>
-                        <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
-                        <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
+                    <div className="flex flex-col">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{purchase.fruit_name}</p>
+                          <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
+                          <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2 space-y-1">
                         <div className="flex items-center">
                           <p className="text-sm text-gray-500 mr-2">
                             송장번호: {purchase.tracking_number || '배송 준비 중'}
@@ -384,12 +388,12 @@ export default function ProfilePage() {
                           )}
                         </div>
                         <p className="text-sm text-gray-500">
+                          구매일: {new Date(purchase.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-gray-500">
                           배송완료 예정일: {calculateEstimatedDeliveryDate(purchase.created_at)}
                         </p>
                       </div>
-                      <p className="text-sm text-gray-500">
-                        구매일: {new Date(purchase.created_at).toLocaleDateString()}
-                      </p>
                     </div>
                   </li>
                 ))}
