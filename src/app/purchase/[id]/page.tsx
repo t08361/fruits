@@ -44,7 +44,7 @@ export default function PurchasePage() {
   const [user, setUser] = useState<User | null>(null)
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
-  const [paymentMethod] = useState<string>('무통장 ���금') // 결제 방법을 무통장 입금으로 고정
+  const [paymentMethod] = useState<string>('무통장 입금') // 결제 방법을 무통장 입금으로 고정
   const supabase = createClientComponentClient()
   const params = useParams()
   const router = useRouter()

@@ -87,8 +87,9 @@ export default function Home() {
           </div>
         </Link>
       ) : (
-        <div className="h-full bg-white flex items-center justify-center p-4">
-          {/* 빈 상태일 때 아무 내용도 표시하지 않음 */}
+        <div className="h-full bg-white flex flex-col items-center justify-start pt-8">
+          <p className="text-sm text-gray-500 text-center mb-1">새로운 상품이 곧 도착합니다!</p>
+          <p className="text-sm text-gray-500 text-center">기대해 주세요.</p>
         </div>
       )}
     </div>
@@ -116,10 +117,10 @@ export default function Home() {
     "너는 비싼 옷 입었지만, 난 누구나 쉽게 만나볼 수 있지!",
     "프리미엄이라고 너무 잘난 척 하지 마~ 맛은 나도 만만치 않다고!",
     "난 부담 없는 가격으로 맛도 충분히 낸다구!",
-    "넌 귀족, 난 서민! 하지만 두 날 사랑해!",
+    "넌 귀족, 난 서민! 하지만 모두 날 사랑해!",
     "난 가격 대비 성능 최고! 너는 너무 비싸서 좀 부담스러워~",
     "너처럼 비싸지 않아도 사람들은 날 충분히 사랑해!",
-    "너는 멋지긴 해도, 난 일상에서 항상 함께하는 친구야!",
+    "너는 멋지긴 해도, 난 일상에서 항상 함께하��� 친구야!",
     "프리미엄이라고 해서 다 좋은 건 아니야, 내 매력은 실속이야!",
     "넌 특별한 날만 등장하지만, 난 언제든 불러주기만 하면 돼!",
     "내가 이렇게 사랑받는 이유는 바로 '합리적 소비'야, 알아두라고!",
@@ -148,25 +149,22 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-green-50">
       <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
-      <main className="container mx-auto px-4 py-6">
+      <main className="w-full px-2 py-6">
         <div className="space-y-4">
           {Object.entries(allFruits).map(([fruitType, { regular, premium }]) => (
             <div key={fruitType} className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <h3 className="text-sm font-semibold p-2 bg-gray-50 border-b text-black">
-                {fruitType}
-              </h3>
               <div className="p-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <h4 className="text-xs font-medium text-green-600 mb-1">가성비 상품</h4>
-                    <p className="text-xs text-gray-500 mb-2 font-sans">
+                    <h4 className="text-xs font-medium text-green-600 mb-1 text-left">가성비 상품</h4>
+                    <p className="text-xs text-gray-500 mb-2 font-sans h-10 flex items-center text-left">
                       {regular ? getRandomMessage(affordableMessages) : ""}
                     </p>
                     {renderFruitCard(regular)}
                   </div>
                   <div>
-                    <h4 className="text-xs font-medium text-purple-600 mb-1">프리미엄 상품</h4>
-                    <p className="text-xs text-gray-500 mb-2 font-sans">
+                    <h4 className="text-xs font-medium text-purple-600 mb-1 text-left">프리미엄 상품</h4>
+                    <p className="text-xs text-gray-500 mb-2 font-sans h-10 flex items-center text-left">
                       {premium ? getRandomMessage(premiumMessages) : ""}
                     </p>
                     {renderFruitCard(premium)}

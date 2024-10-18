@@ -93,10 +93,10 @@ export default function FruitDetail() {
 
   const getRandomNonShippingCoupon = () => {
     const otherCoupons = [
-      { name: '5000원 할인', value: '5000' },
+      { name: '2900원 할인', value: '2900' },
       { name: '2800원 할인', value: '2800' },
-      { name: '4800원 할인', value: '4800' },
-      { name: '10% 할인', value: '10%' },
+      { name: '500원 할인', value: '500' },
+      { name: '770원 할인', value: '770' },
       { name: '1000원 할인', value: '1000' }
     ]
     return otherCoupons[Math.floor(Math.random() * otherCoupons.length)]
