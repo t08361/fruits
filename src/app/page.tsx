@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react'
-import { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -19,10 +18,26 @@ interface Fruit {
   fruit_type: string
 }
 
+interface Coupon {
+  name: string;
+  value: string;
+}
+
 export default function Home() {
   const [fruits, setFruits] = useState<Fruit[]>([])
   const [user, setUser] = useState<User | null>(null)
   const supabase = createClientComponentClient()
+  const [boxValues, setBoxValues] = useState<Coupon[]>([
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' },
+    { name: '?', value: '?' }
+  ])
+  const [openedBoxes, setOpenedBoxes] = useState<number[]>([])
+  const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
+  const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
 
   const fetchFruits = useCallback(async () => {
     const { data, error } = await supabase
@@ -146,18 +161,133 @@ export default function Home() {
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
+  const getRandomCoupon = useCallback(() => {
+    const coupons = [
+      { name: '무료배송', value: '무료배송' },
+      { name: '700원 할인', value: '700' },
+      { name: '2900원 할인', value: '2900' },
+      { name: '2800원 할인', value: '2800' },
+      { name: '1000원 할인', value: '1000' },
+      { name: '2000원 할인', value: '2000' },
+      { name: '3000원 할인', value: '3000' }
+    ]
+    return coupons[Math.floor(Math.random() * coupons.length)]
+  }, [])
+
+  const calculateCoupons = useCallback(() => {
+    const coupons: Coupon[] = []
+    
+    // 첫 번째 박스에 99% 확률로 무료배송 쿠폰 추가
+    if (Math.random() < 0.99) {
+      coupons.push({ name: '무료배송', value: '무료배송' })
+    } else {
+      coupons.push(getRandomCoupon())
+    }
+
+    // 나머지 5개 박스에 랜덤 쿠폰 추가
+    for (let i = 1; i < 6; i++) {
+      coupons.push(getRandomCoupon())
+    }
+
+    // 최종적으로 무작위로 섞기
+    return coupons.sort(() => Math.random() - 0.5)
+  }, [getRandomCoupon])
+
+  useEffect(() => {
+    const calculatedCoupons = calculateCoupons()
+    setBoxValues(calculatedCoupons)
+  }, [calculateCoupons])
+
+  const selectBox = (index: number) => {
+    if (openedBoxes.length >= 2) return
+    
+    const newOpenedBoxes = [...openedBoxes, index]
+    setOpenedBoxes(newOpenedBoxes)
+    
+    const newSelectedCoupons = [...selectedCoupons, boxValues[index]]
+    setSelectedCoupons(newSelectedCoupons)
+    
+    if (newOpenedBoxes.length === 2) {
+      setIsBoxesRevealed(true)
+    }
+  }
+
+  const saveCouponsToDatabase = async () => {
+    if (!user) return
+
+    for (const coupon of selectedCoupons) {
+      const { error } = await supabase.from('coupons').insert({
+        user_id: user.id,
+        coupon_type: coupon.name,
+        coupon_value: coupon.value,
+        is_used: false,
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30일 후 만료
+      })
+
+      if (error) {
+        console.error('Error saving coupon:', error)
+      }
+    }
+
+    // 랜덤박스 열기 이벤트 기록
+    await supabase.from('user_events').insert({
+      user_id: user.id,
+      event_type: 'random_box_opened',
+      created_at: new Date().toISOString()
+    })
+  }
+
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-gray-100">
       <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
       <div className="bg-yellow-400 py-6 px-4 text-center">
-        <p className="text-0xl font-bold text-gray-800">🎉 특별 이벤트: 가입만 해도 무료배송 쿠폰 3개 + 랜덤박스 2개 열기 기회! 🎁</p>
-        <p className="text-0lg text-gray-700 mt-2">지금 바로 가입하고 특별한 혜택을 만나보세요!</p>
+        <p className="text-xl font-bold text-gray-800">🎉 특별 이벤트: 가입만 해도 무료배송 쿠폰 3개 + 랜덤박스 2개 열기 기회! 🎁</p>
+        <p className="text-base text-gray-700 mt-2">지금 바로 가입하고 특별한 혜택을 만나보세요!</p>
         {!user && (
           <button onClick={handleLogin} className="mt-4 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
             간편 가입하고 혜택받기
           </button>
         )}
       </div>
+      {user && !isBoxesRevealed && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">랜덤박스 열기</h2>
+          <p className="text-gray-600 mb-4">원하는 랜덤박스 2개를 선택해주세요!</p>
+          <div className="grid grid-cols-3 gap-4">
+            {boxValues.map((coupon, index) => (
+              <button
+                key={index}
+                onClick={() => selectBox(index)}
+                disabled={openedBoxes.includes(index)}
+                className={`w-full aspect-square ${
+                  openedBoxes.includes(index)
+                    ? 'bg-green-500'
+                    : 'bg-yellow-400 hover:bg-yellow-500'
+                } rounded-lg shadow-md flex items-center justify-center text-2xl font-bold text-white transition-colors`}
+              >
+                {openedBoxes.includes(index) ? coupon.name : '?'}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {isBoxesRevealed && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">축하합니다!</h2>
+          <p className="text-gray-600 mb-4">다음 쿠폰을 획득하셨습니다:</p>
+          <ul className="list-disc list-inside mb-4">
+            {selectedCoupons.map((coupon, index) => (
+              <li key={index} className="text-lg text-green-600">{coupon.name}</li>
+            ))}
+          </ul>
+          <button
+            onClick={saveCouponsToDatabase}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            쿠폰 저장하기
+          </button>
+        </div>
+      )}
       <main className="w-full px-2 py-6">
         <div className="space-y-4">
           {Object.entries(allFruits).map(([fruitType, { regular, premium }]) => (
@@ -165,14 +295,14 @@ export default function Home() {
               <div className="p-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <h4 className="text-xs font-medium text-green-600 mb-1 text-left">가성비 상품</h4>
+                    <h4 className="text-base font-bold text-green-600 mb-1 text-center">가성비 상품</h4>
                     <p className="text-xs text-gray-500 mb-2 font-sans h-10 flex items-center text-left">
                       {regular ? getRandomMessage(affordableMessages) : ""}
                     </p>
                     {renderFruitCard(regular)}
                   </div>
                   <div>
-                    <h4 className="text-xs font-medium text-purple-600 mb-1 text-left">프리미엄 상품</h4>
+                    <h4 className="text-base font-bold text-purple-600 mb-1 text-center">프리미엄 상품</h4>
                     <p className="text-xs text-gray-500 mb-2 font-sans h-10 flex items-center text-left">
                       {premium ? getRandomMessage(premiumMessages) : ""}
                     </p>
