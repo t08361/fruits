@@ -5,6 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 // import Image from 'next/image'  // 이 줄을 제거하거나 주석 처리
+import RandomBox from '../../components/RandomBox'
 
 interface Coupon {
   id: string
@@ -38,6 +39,7 @@ export default function ProfilePage() {
   const [showAllCoupons, setShowAllCoupons] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
   const [copiedTrackingNumber, setCopiedTrackingNumber] = useState<string | null>(null)
+  const [showRandomBox, setShowRandomBox] = useState(true)
 
   useEffect(() => {
     const fetchUserAndData = async () => {
@@ -158,6 +160,17 @@ export default function ProfilePage() {
     { name: '우체국택배', url: 'https://service.epost.go.kr/iservice/usr/trace/usrtrc001k01.jsp' },
     { name: '롯데택배', url: 'https://www.lotteglogis.com/home/reservation/tracking/index' },
   ]
+
+  const handleCouponsReceived = (newCoupons: string[]) => {
+    setCoupons([...coupons, ...newCoupons.map(couponType => ({
+      id: Math.random().toString(36).substr(2, 9),
+      coupon_type: couponType,
+      coupon_value: couponType,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      is_used: false
+    }))])
+    setShowRandomBox(false)
+  }
 
   if (loading) {
     return <div className="text-center py-8">로딩 중...</div>
@@ -386,6 +399,11 @@ export default function ProfilePage() {
           </Link>
         </div>
       </div>
+      {showRandomBox && user && (
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <RandomBox userId={user.id} onCouponsReceived={handleCouponsReceived} />
+        </div>
+      )}
     </div>
   )
 }

@@ -91,24 +91,18 @@ export default function FruitDetail() {
     return () => subscription.unsubscribe()
   }, [fetchFruit, supabase])
 
-  const getRandomNonShippingCoupon = () => {
-    const otherCoupons = [
-      { name: '2900원 할인', value: '2900' },
-      { name: '2800원 할인', value: '2800' },
-      { name: '500원 할인', value: '500' },
-      { name: '770원 할인', value: '770' },
-      { name: '1000원 할인', value: '1000' }
+  const getRandomCoupon = useCallback(() => {
+    const coupons = [
+      { name: '무료배송', value: '무료배송' },
+      { name: '10% 할인', value: '10%' },
+      { name: '15% 할인', value: '15%' },
+      { name: '20% 할인', value: '20%' },
+      { name: '1000원 할인', value: '1000' },
+      { name: '2000원 할인', value: '2000' },
+      { name: '3000원 할인', value: '3000' }
     ]
-    return otherCoupons[Math.floor(Math.random() * otherCoupons.length)]
-  }
-
-  const getRandomCoupon = () => {
-    if (Math.random() < 0.2) { // 20% 확률로 무료배송 쿠폰
-      return { name: '무료배송', value: '무료배송' }
-    } else {
-      return getRandomNonShippingCoupon()
-    }
-  }
+    return coupons[Math.floor(Math.random() * coupons.length)]
+  }, [])
 
   const calculateCoupons = useCallback(() => {
     if (!fruit) {
@@ -122,11 +116,11 @@ export default function FruitDetail() {
     if (Math.random() < 0.99) {
       coupons.push({ name: '무료배송', value: '무료배송' })
     } else {
-      coupons.push(getRandomNonShippingCoupon())
+      coupons.push(getRandomCoupon())
     }
 
     // 두 번째 박스에는 무료배송 쿠폰이 아닌 다른 쿠폰 추가
-    coupons.push(getRandomNonShippingCoupon())
+    coupons.push(getRandomCoupon())
 
     // 나머지 4개 박스에 랜덤 쿠폰 추가
     for (let i = 2; i < 6; i++) {
@@ -135,7 +129,7 @@ export default function FruitDetail() {
 
     // 최종적으로 무작위로 섞기
     return coupons.sort(() => Math.random() - 0.5)
-  }, [fruit])
+  }, [fruit, getRandomCoupon])
 
   useEffect(() => {
     if (fruit) {

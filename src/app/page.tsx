@@ -115,12 +115,12 @@ export default function Home() {
   const affordableMessages = [
     "너만 잘났냐? 나도 가성비로는 인기짱이야!",
     "너는 비싼 옷 입었지만, 난 누구나 쉽게 만나볼 수 있지!",
-    "프리미엄이라고 너무 잘난 척 하지 마~ 맛은 나도 만만치 않다고!",
+    "프리미엄이라고 너무 잘난 척 하지 마~ 맛은 나도 만만하지 않다고!",
     "난 부담 없는 가격으로 맛도 충분히 낸다구!",
     "넌 귀족, 난 서민! 하지만 모두 날 사랑해!",
     "난 가격 대비 성능 최고! 너는 너무 비싸서 좀 부담스러워~",
     "너처럼 비싸지 않아도 사람들은 날 충분히 사랑해!",
-    "너는 멋지긴 해도, 난 일상에서 항상 함께하��� 친구야!",
+    "너는 멋지긴 해도, 난 일상에서 항상 함께하는 친구야!",
     "프리미엄이라고 해서 다 좋은 건 아니야, 내 매력은 실속이야!",
     "넌 특별한 날만 등장하지만, 난 언제든 불러주기만 하면 돼!",
     "내가 이렇게 사랑받는 이유는 바로 '합리적 소비'야, 알아두라고!",
@@ -149,6 +149,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-green-50">
       <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
+      <div className="bg-yellow-400 py-6 px-4 text-center">
+        <p className="text-0xl font-bold text-gray-800">🎉 특별 이벤트: 가입만 해도 무료배송 쿠폰 3개 + 랜덤박스 2개 열기 기회! 🎁</p>
+        <p className="text-0lg text-gray-700 mt-2">지금 바로 가입하고 특별한 혜택을 만나보세요!</p>
+        {!user && (
+          <button onClick={handleLogin} className="mt-4 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            간편 가입하고 혜택받기
+          </button>
+        )}
+      </div>
       <main className="w-full px-2 py-6">
         <div className="space-y-4">
           {Object.entries(allFruits).map(([fruitType, { regular, premium }]) => (

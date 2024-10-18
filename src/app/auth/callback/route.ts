@@ -1,47 +1,42 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-// import { SupabaseClient } from '@supabase/supabase-js'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const redirectTo = requestUrl.searchParams.get('redirect') || '/'
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies })
-    await supabase.auth.exchangeCodeForSession(code)
-    
-    // 새로운 사용자 확인 및 무료배송 쿠폰 지급 코드 주석 처리
-    /*
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error && data?.user) {
       // 새로운 사용자인지 확인
-      const { error: customerError } = await supabase
-        .from('customers')
-        .select('id, is_first_login')
+      const { /* data: existingUser, */ error: userError } = await supabase
+        .from('users')
+        .select('id')
         .eq('id', data.user.id)
         .single()
 
-      if (customerError && customerError.code === 'PGRST116') {
-        // 새로운 사용자라면 무료배송 쿠폰 3개 지급 및 사용자 정보 저장
+      if (userError && userError.code === 'PGRST116') {
+        // 새로운 사용자라면 무료배송 쿠폰 3개 지급
         await giveFreeCoupons(supabase, data.user.id)
-        await supabase.from('customers').insert({
+        
+        // 사용자 정보 저장
+        await supabase.from('users').insert({
           id: data.user.id,
-          is_first_login: true
+          email: data.user.email,
+          created_at: new Date().toISOString()
         })
       }
     }
-    */
   }
 
-  // 로그인 후 지정된 페이지로 리다이렉트
-  return NextResponse.redirect(`${requestUrl.origin}${redirectTo}`)
+  // 로그인 후 프로필 페이지로 리다이렉트
+  return NextResponse.redirect(`${requestUrl.origin}/profile`)
 }
 
-// giveFreeCoupons 함수도 주석 처리
-/*
 async function giveFreeCoupons(supabase: SupabaseClient, userId: string) {
   const coupons = Array(3).fill({
     user_id: userId,
@@ -57,4 +52,3 @@ async function giveFreeCoupons(supabase: SupabaseClient, userId: string) {
     console.error('Error giving free coupons:', error)
   }
 }
-*/
