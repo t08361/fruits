@@ -171,7 +171,7 @@ export default function Home() {
     "맛도 중요하지만, 품격은 따라올 수 없지 않겠니?",
     "네가 가성비 좋다지만, 품격은 나를 따라올 수 없지!",
     "난 말 그대로 '프리미엄'이잖아! 모두 날 맛보면 그 차이를 알지!",
-    "그래, 네가 인기 있는 건 인정, 하지만 나만의 고급스러움은 넘��� 수 없다고!",
+    "그래, 네가 인기 있는 건 인정, 하지만 나만의 고급스러움은 넘 수 없다고!",
     "넌 대중이라 좋겠지만, 난 선택받은 사람들만 찾는다구!",
     "언젠가는 너도 나처럼 고급지게 변신하고 싶지 않겠니?",
     "난 단 한 입만 먹어봐도 잊을 수 없는 맛을 자랑하지!",
@@ -236,20 +236,38 @@ export default function Home() {
   const saveCouponsToDatabase = async () => {
     if (!user) return
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('customers')
       .update({ is_evented: true })
       .eq('id', user.id)
 
-    if (error) {
-      console.error('Error updating event participation:', error)
-    } else {
-      setHasParticipatedEvent(true)
-      // 여기에 쿠폰을 데이터베이스에 저장하는 로직 추가
-      // ...
-
-      alert('쿠폰이 성공적으로 저장되었습니다!')
+    if (updateError) {
+      console.error('Error updating event participation:', updateError)
+      alert('쿠폰 저장 중 오류가 발생했습니다.')
+      return
     }
+
+    // 선택된 쿠폰들을 coupons 테이블에 저장
+    const couponsToSave = selectedCoupons.map(coupon => ({
+      user_id: user.id,
+      coupon_type: coupon.name,
+      coupon_value: coupon.value,
+      is_used: false,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30일 후 만료
+    }))
+
+    const { error: insertError } = await supabase
+      .from('coupons')
+      .insert(couponsToSave)
+
+    if (insertError) {
+      console.error('Error saving coupons:', insertError)
+      alert('쿠폰 저장 중 오류가 발생했습니다.')
+      return
+    }
+
+    setHasParticipatedEvent(true)
+    alert('쿠폰이 성공적으로 저장되었습니다!')
   }
 
   return (
