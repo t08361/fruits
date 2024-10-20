@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import Script from 'next/script'
+import axios from 'axios'
 
 interface Fruit {
   id: number
@@ -219,6 +220,18 @@ export default function PurchasePage() {
     return true;
   };
 
+  const sendKakaoNotification = async (phoneNumber: string, purchaseInfo: any) => {
+    try {
+      const response = await axios.post('/api/send-kakao-notification', {
+        phoneNumber,
+        purchaseInfo
+      });
+      console.log('Kakao notification sent:', response.data);
+    } catch (error) {
+      console.error('Error sending Kakao notification:', error);
+    }
+  };
+
   const handlePurchase = async () => {
     if (!user || !fruit) return;
 
@@ -301,6 +314,15 @@ export default function PurchasePage() {
 
       setPurchaseComplete(true);
       setFinalPrice(finalPrice);
+
+      // 카카오톡 알림 보내기
+      await sendKakaoNotification(editedUser.phone, {
+        fruitName: fruit.name,
+        price: finalPrice,
+        accountNumber: '100031749372',
+        purchaseId: purchaseData.id
+      });
+
       alert('구매가 완료되었습니다. 입금을 진행해 주세요.');
     } catch (error) {
       console.error('Error during purchase:', error);

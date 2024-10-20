@@ -398,7 +398,7 @@ export default function ProfilePage() {
                         <p className="text-sm text-gray-500">이메일: {user.email}</p>
                         <p className="text-sm text-gray-500">전화번호: {user.user_metadata?.phone || '전화번호 없음'}</p>
                         <p className="text-sm text-gray-500">
-                          주소: {user.user_metadata?.address ? user.user_metadata.address.replace('||', ' ') : '주소 없음'}
+                          주소: {user.user_metadata?.address ? user.user_metadata.address.replace('||', ' ') : '주��� 없음'}
                         </p>
                       </>
                     )}
@@ -514,9 +514,11 @@ export default function ProfilePage() {
                                 <p className="text-sm font-medium text-gray-900">{purchase.fruit_name}</p>
                                 <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
                                 <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
+                                {/* 구매 시간 부분 주석 처리
                                 <p className="text-sm text-gray-500">
                                   구매 시간: {new Date(purchase.purchased_at).toLocaleString()}
                                 </p>
+                                */}
                               </div>
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isTransactionComplete(purchase) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                 {isTransactionComplete(purchase) ? '거래 완료' : '거래 중'}
