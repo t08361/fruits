@@ -6,6 +6,7 @@ import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import RandomBox from '../../components/RandomBox'
 import Script from 'next/script'
+import Image from 'next/image'
 
 interface Coupon {
   id: string
@@ -23,6 +24,8 @@ interface Purchase {
   tracking_number: string | null
   created_at: string
   purchased_at: string
+  fruit_image_url: string
+  fruit_id: number // 이 줄 추가
 }
 
 export default function ProfilePage() {
@@ -74,14 +77,18 @@ export default function ProfilePage() {
         // 구매 내역 가져오기
         const { data: purchasesData, error: purchasesError } = await supabase
           .from('purchases')
-          .select('*')
+          .select('*, fruits(id, image_url)') // fruits 테이블에서 id와 image_url을 함께 가져옵니다.
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
 
         if (purchasesError) {
           console.error('Error fetching purchases:', purchasesError)
         } else {
-          setPurchases(purchasesData)
+          setPurchases(purchasesData.map((purchase: any) => ({
+            ...purchase,
+            fruit_id: purchase.fruits.id,
+            fruit_image_url: purchase.fruits.image_url
+          })))
         }
 
         // 사용자가 랜덤박스를 열었는지 확인
@@ -303,6 +310,11 @@ export default function ProfilePage() {
 
   const displayedPurchases = showAllPurchases ? sortedPurchases : sortedPurchases.slice(0, 3);
 
+  const getImageUrl = (path: string) => {
+    if (!path) return '/images/placeholder-fruit.jpg'
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/fruits/${path}`
+  }
+
   if (loading) {
     return <div className="text-center py-8">로딩 중...</div>
   }
@@ -398,7 +410,7 @@ export default function ProfilePage() {
                         <p className="text-sm text-gray-500">이메일: {user.email}</p>
                         <p className="text-sm text-gray-500">전화번호: {user.user_metadata?.phone || '전화번호 없음'}</p>
                         <p className="text-sm text-gray-500">
-                          주소: {user.user_metadata?.address ? user.user_metadata.address.replace('||', ' ') : '주��� 없음'}
+                          주소: {user.user_metadata?.address ? user.user_metadata.address.replace('||', ' ') : '주 없음'}
                         </p>
                       </>
                     )}
@@ -508,42 +520,51 @@ export default function ProfilePage() {
                     <ul className="divide-y divide-gray-200">
                       {displayedPurchases.map((purchase) => (
                         <li key={purchase.id} className={`py-4 ${isTransactionComplete(purchase) ? 'bg-green-50' : 'bg-yellow-50'}`}>
-                          <div className="flex flex-col">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{purchase.fruit_name}</p>
-                                <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
-                                <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
-                                {/* 구매 시간 부분 주석 처리
+                          <div className="flex items-center">
+                            <Link href={`/fruit/${purchase.fruit_id}`} className="flex-shrink-0 mr-4">
+                              <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                                <Image
+                                  src={getImageUrl(purchase.fruit_image_url)}
+                                  alt={purchase.fruit_name}
+                                  layout="fill"
+                                  objectFit="cover"
+                                />
+                              </div>
+                            </Link>
+                            <div className="flex-grow">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <Link href={`/fruit/${purchase.fruit_id}`} className="text-sm font-medium text-gray-900 hover:text-indigo-600">
+                                    {purchase.fruit_name}
+                                  </Link>
+                                  <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
+                                  <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
+                                </div>
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isTransactionComplete(purchase) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                  {isTransactionComplete(purchase) ? '거래 완료' : '거래 중'}
+                                </span>
+                              </div>
+                              <div className="mt-2 space-y-1">
+                                <div className="flex items-center">
+                                  <p className="text-sm text-gray-500 mr-2">
+                                    송장번호: {purchase.tracking_number || '배송 준비 중'}
+                                  </p>
+                                  {purchase.tracking_number && (
+                                    <button
+                                      onClick={() => copyToClipboard(purchase.tracking_number!, 'tracking')}
+                                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
+                                    >
+                                      {copiedTrackingNumber === purchase.tracking_number ? '복사됨!' : '복사'}
+                                    </button>
+                                  )}
+                                </div>
                                 <p className="text-sm text-gray-500">
-                                  구매 시간: {new Date(purchase.purchased_at).toLocaleString()}
+                                  구매일: {new Date(purchase.created_at).toLocaleDateString()}
                                 </p>
-                                */}
-                              </div>
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isTransactionComplete(purchase) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                {isTransactionComplete(purchase) ? '거래 완료' : '거래 중'}
-                              </span>
-                            </div>
-                            <div className="mt-2 space-y-1">
-                              <div className="flex items-center">
-                                <p className="text-sm text-gray-500 mr-2">
-                                  송장번호: {purchase.tracking_number || '배송 준비 중'}
+                                <p className="text-sm text-gray-500">
+                                  배송완료 예정일: {calculateEstimatedDeliveryDate(purchase.created_at)}
                                 </p>
-                                {purchase.tracking_number && (
-                                  <button
-                                    onClick={() => copyToClipboard(purchase.tracking_number!, 'tracking')}
-                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
-                                  >
-                                    {copiedTrackingNumber === purchase.tracking_number ? '복사됨!' : '복사'}
-                                  </button>
-                                )}
                               </div>
-                              <p className="text-sm text-gray-500">
-                                구매일: {new Date(purchase.created_at).toLocaleDateString()}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                배송완료 예정일: {calculateEstimatedDeliveryDate(purchase.created_at)}
-                              </p>
                             </div>
                           </div>
                         </li>

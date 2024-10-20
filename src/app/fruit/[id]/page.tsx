@@ -209,9 +209,18 @@ export default function FruitDetail() {
     }
   }
 
-  const scrollToSearchSection = () => {
-    searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const handleComparePrice = useCallback(() => {
+    // 네이버 검색 활성화
+    setActiveSearch('naver');
+    
+    // 화면 스크롤
+    setTimeout(() => {
+      searchSectionRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'center'  // 이 부분을 추가합니다.
+      });
+    }, 100);  // 약간의 지연을 추가합니다.
+  }, []);
 
   if (!id) {
     return <div>유효하지 않은 과일 ID입니다.</div>
@@ -222,7 +231,7 @@ export default function FruitDetail() {
   return (
     <div className="min-h-screen bg-green-100">
       <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="md:flex">
             <div className="md:w-1/2">
@@ -242,12 +251,14 @@ export default function FruitDetail() {
                 )}
                 <div className="flex justify-between items-center mb-1 sm:mb-2">
                   <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
-                  <button
-                    onClick={scrollToSearchSection}
-                    className="text-sm bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
-                  >
-                    가격 비교하러 가기
-                  </button>
+                  <div className="mt-4 flex justify-between items-center">
+                    <button
+                      onClick={handleComparePrice}
+                      className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                    >
+                      가격 비교하러 가기
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div className="flex flex-col items-center my-4">
@@ -362,23 +373,17 @@ export default function FruitDetail() {
               </div>
               
               {/* 검색 섹션 */}
-              <div ref={searchSectionRef} className="mt-4 mb-4 flex justify-center">
-                <button
-                  onClick={() => setActiveSearch('naver')}
-                  className={`px-4 py-2 rounded-full ${activeSearch === 'naver' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
-                >
-                  네이버에서 검색
-                </button>
+              <div ref={searchSectionRef} className="mt-8 mb-4">  {/* mt-4를 mt-8�� 변경 */}
+                {activeSearch && (
+                  <div className="h-[600px] border border-gray-300 rounded-lg overflow-hidden">
+                    <iframe
+                      src={getSearchUrl('naver', fruit?.name || '')}
+                      className="w-full h-full"
+                      title="네이버 검색 결과"
+                    />
+                  </div>
+                )}
               </div>
-              {activeSearch && (
-                <div className="h-[600px] border border-gray-300 rounded-lg overflow-hidden">
-                  <iframe
-                    src={getSearchUrl('naver', fruit?.name || '')}
-                    className="w-full h-full"
-                    title="네이버 검색 결과"
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>
