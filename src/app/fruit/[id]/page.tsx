@@ -96,11 +96,11 @@ export default function FruitDetail() {
     const coupons = [
       { name: '무료배송', value: '무료배송' },
       { name: '700원 할인', value: '700' },
-      { name: '2900원 할인', value: '2900' },
-      { name: '2800원 할인', value: '2800' },
-      { name: '1000원 할인', value: '1000' },
-      { name: '2000원 할인', value: '2000' },
-      { name: '3000원 할인', value: '3000' }
+      { name: '1900원 할인', value: '1900' },
+      { name: '1800원 할인', value: '1800' },
+      { name: '900원 할인', value: '900' },
+      { name: '2100원 할인', value: '2100' },
+      { name: '2000원 할인', value: '2000' }
     ]
     return coupons[Math.floor(Math.random() * coupons.length)]
   }, [])
@@ -261,7 +261,7 @@ export default function FruitDetail() {
                             key={index}
                             onClick={() => selectBox(index)}
                             disabled={isBoxesRevealed || openedBoxes.includes(index)}
-                            className={`w-40 h-10 ${
+                            className={`w-20 h-10 ${
                               openedBoxes.includes(index)
                                 ? 'bg-green-500'
                                 : isBoxesRevealed
@@ -279,7 +279,7 @@ export default function FruitDetail() {
                             key={index + 3}
                             onClick={() => selectBox(index + 3)}
                             disabled={isBoxesRevealed || openedBoxes.includes(index + 3)}
-                            className={`w-40 h-10 ${
+                            className={`w-20 h-10 ${
                               openedBoxes.includes(index + 3)
                                 ? 'bg-green-500'
                                 : isBoxesRevealed

@@ -39,6 +39,7 @@ export default function Home() {
   const [selectedCoupons, setSelectedCoupons] = useState<Coupon[]>([])
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
   const [hasParticipatedEvent, setHasParticipatedEvent] = useState(false)
+  const [displayMode, setDisplayMode] = useState<'grouped' | 'mixed' | 'budget' | 'budget10k' | 'over20k'>('mixed')
 
   const fetchFruits = useCallback(async () => {
     const { data, error } = await supabase
@@ -119,7 +120,7 @@ export default function Home() {
           </div>
           <div className="p-2 flex flex-col justify-between flex-grow">
             <h3 className="text-sm font-semibold mb-1 text-gray-800 line-clamp-2">{fruit.name}</h3>
-            <p className="text-xs text-gray-600">가격: {fruit.price.toLocaleString()}원</p>
+            <p className="text-base font-bold text-red-600">가격: {fruit.price.toLocaleString()}원</p>
           </div>
         </Link>
       ) : (
@@ -146,7 +147,7 @@ export default function Home() {
     return grouped
   }
 
-  const allFruits = groupFruitsByType(fruits)
+  // const allFruits = groupFruitsByType(fruits)  // 이 줄을 주석 처리하거나 제거
 
   const getRandomCoupon = useCallback(() => {
     const coupons = [
@@ -236,18 +237,79 @@ export default function Home() {
     alert('쿠폰이 성공적으로 저장되었습니다!')
   }
 
+  const filterFruits = (fruits: Fruit[]) => {
+    switch (displayMode) {
+      case 'budget':
+        return fruits.filter(fruit => fruit.price <= 10000)
+      case 'budget10k':
+        return fruits.filter(fruit => fruit.price > 10000 && fruit.price <= 20000)
+      case 'over20k':
+        return fruits.filter(fruit => fruit.price > 20000)
+      default:
+        return fruits
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
       <div className="bg-yellow-200 py-6 px-4 text-center">
-        <p className="text-sm font-bold text-gray-800">🎉 특별 이벤트: 가입만 해도 무료배송 쿠폰 3개 + 랜덤박스 2개 개봉 기회! 🎁</p>
+        <p className="text-sm font-bold text-gray-800">🎉 특별 이벤트: 간편로그인하면 랜덤박스 2개 개봉 기회! 🎁</p>
         <p className="text-xs text-gray-700 mt-2">지금 바로 가입하고 특별한 혜택을 만나보세요!</p>
         {!user && (
           <button onClick={handleLogin} className="mt-4 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-            간편 가입하고 혜택받기
+            카카오로그인하고 혜택받기
           </button>
         )}
       </div>
+
+      {/* 필터 버튼 수정 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-wrap justify-center gap-2">
+          
+          <button
+            onClick={() => setDisplayMode('mixed')}
+            className={`px-3 py-2 text-xs sm:text-sm rounded-full transition-colors duration-200 ${
+              displayMode === 'mixed' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            최신순
+          </button>
+          <button
+            onClick={() => setDisplayMode('budget')}
+            className={`px-3 py-2 text-xs sm:text-sm rounded-full transition-colors duration-200 ${
+              displayMode === 'budget' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            1만원 이내
+          </button>
+          <button
+            onClick={() => setDisplayMode('budget10k')}
+            className={`px-3 py-2 text-xs sm:text-sm rounded-full transition-colors duration-200 ${
+              displayMode === 'budget10k' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            1만원대
+          </button>
+          <button
+            onClick={() => setDisplayMode('over20k')}
+            className={`px-3 py-2 text-xs sm:text-sm rounded-full transition-colors duration-200 ${
+              displayMode === 'over20k' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            2만원 이상
+          </button>
+          <button
+            onClick={() => setDisplayMode('grouped')}
+            className={`px-3 py-2 text-xs sm:text-sm rounded-full transition-colors duration-200 ${
+              displayMode === 'grouped' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            가성비/프리미엄
+          </button>
+        </div>
+      </div>
+
       {user && !hasParticipatedEvent && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">랜덤박스 열기</h2>
@@ -288,24 +350,33 @@ export default function Home() {
         </div>
       )}
       <main className="w-full px-2 py-6">
-        <div className="space-y-4">
-          {Object.entries(allFruits).map(([fruitType, { regular, premium }]) => (
-            <div key={fruitType} className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="p-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <h4 className="text-sm text-base font-bold text-green-600 mb-1 text-center">가성비 상품</h4>
-                    {renderFruitCard(regular)}
-                  </div>
-                  <div>
-                    <h4 className="text-sm text-base font-bold text-purple-600 mb-1 text-center">프리미엄 상품</h4>
-                    {renderFruitCard(premium)}
-                  </div>
+        {displayMode === 'grouped' ? (
+          // 가성비/프리미엄 그룹화 방식
+          Object.entries(groupFruitsByType(filterFruits(fruits))).map(([fruitType, groupedFruits]) => (
+            <div key={fruitType} className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">{fruitType}</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">가성비</h3>
+                  {renderFruitCard(groupedFruits.regular)}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">프리미엄</h3>
+                  {renderFruitCard(groupedFruits.premium)}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          ))
+        ) : (
+          // 다른 모든 방식 (혼합, 예산별)
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {filterFruits(fruits).map((fruit) => (
+              <div key={fruit.id}>
+                {renderFruitCard(fruit)}
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   )

@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogin, onLogout }) => {
             </>
           ) : (
             <button onClick={onLogin} className="text-green-600 hover:text-green-700">
-              간편 로그인
+              간편로그인
             </button>
           )}
           <a href="https://www.instagram.com/name_your.price/" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">

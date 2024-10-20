@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     
     if (!error && data?.user) {
       // 새로운 사용자인지 확인
-      const { /* data: existingUser, */ error: userError } = await supabase
+      const { error: userError } = await supabase
         .from('users')
         .select('id')
         .eq('id', data.user.id)
@@ -33,8 +33,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // 로그인 후 프로필 페이지로 리다이렉트
-  return NextResponse.redirect(`${requestUrl.origin}/profile`)
+  // 로그인 후 메인 페이지로 리다이렉트
+  return NextResponse.redirect(`${requestUrl.origin}/`)
 }
 
 async function giveFreeCoupons(supabase: SupabaseClient, userId: string) {
