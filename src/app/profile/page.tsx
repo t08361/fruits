@@ -43,6 +43,7 @@ export default function ProfilePage() {
   const [copiedTrackingNumber, setCopiedTrackingNumber] = useState<string | null>(null)
   const [showRandomBox, setShowRandomBox] = useState(false)
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [showAllPurchases, setShowAllPurchases] = useState(false);
 
   useEffect(() => {
     const fetchUserAndData = async () => {
@@ -292,6 +293,16 @@ export default function ProfilePage() {
     }).open();
   }
 
+  const isTransactionComplete = (purchase: Purchase) => {
+    return !!purchase.tracking_number;
+  };
+
+  const sortedPurchases = purchases.sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  const displayedPurchases = showAllPurchases ? sortedPurchases : sortedPurchases.slice(0, 3);
+
   if (loading) {
     return <div className="text-center py-8">로딩 중...</div>
   }
@@ -493,45 +504,60 @@ export default function ProfilePage() {
               </div>
               <div className="mt-4">
                 {purchases.length > 0 ? (
-                  <ul className="divide-y divide-gray-200">
-                    {purchases.map((purchase) => (
-                      <li key={purchase.id} className="py-4">
-                        <div className="flex flex-col">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{purchase.fruit_name}</p>
-                              <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
-                              <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
+                  <>
+                    <ul className="divide-y divide-gray-200">
+                      {displayedPurchases.map((purchase) => (
+                        <li key={purchase.id} className={`py-4 ${isTransactionComplete(purchase) ? 'bg-green-50' : 'bg-yellow-50'}`}>
+                          <div className="flex flex-col">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{purchase.fruit_name}</p>
+                                <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
+                                <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
+                                <p className="text-sm text-gray-500">
+                                  구매 시간: {new Date(purchase.purchased_at).toLocaleString()}
+                                </p>
+                              </div>
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isTransactionComplete(purchase) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                {isTransactionComplete(purchase) ? '거래 완료' : '거래 중'}
+                              </span>
+                            </div>
+                            <div className="mt-2 space-y-1">
+                              <div className="flex items-center">
+                                <p className="text-sm text-gray-500 mr-2">
+                                  송장번호: {purchase.tracking_number || '배송 준비 중'}
+                                </p>
+                                {purchase.tracking_number && (
+                                  <button
+                                    onClick={() => copyToClipboard(purchase.tracking_number!, 'tracking')}
+                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
+                                  >
+                                    {copiedTrackingNumber === purchase.tracking_number ? '복사됨!' : '복사'}
+                                  </button>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-500">
-                                구매 시간: {new Date(purchase.purchased_at).toLocaleString()}
+                                구매일: {new Date(purchase.created_at).toLocaleDateString()}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                배송완료 예정일: {calculateEstimatedDeliveryDate(purchase.created_at)}
                               </p>
                             </div>
                           </div>
-                          <div className="mt-2 space-y-1">
-                            <div className="flex items-center">
-                              <p className="text-sm text-gray-500 mr-2">
-                                송장번호: {purchase.tracking_number || '배송 준비 중'}
-                              </p>
-                              {purchase.tracking_number && (
-                                <button
-                                  onClick={() => copyToClipboard(purchase.tracking_number!, 'tracking')}
-                                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
-                                >
-                                  {copiedTrackingNumber === purchase.tracking_number ? '복사됨!' : '복사'}
-                                </button>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-500">
-                              구매일: {new Date(purchase.created_at).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              배송완료 예정일: {calculateEstimatedDeliveryDate(purchase.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                        </li>
+                      ))}
+                    </ul>
+                    {purchases.length > 3 && (
+                      <div className="mt-4 text-center">
+                        <button
+                          onClick={() => setShowAllPurchases(!showAllPurchases)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          {showAllPurchases ? '접기' : '더 보기'}
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-sm text-gray-500">구매 내역이 없습니다.</p>
                 )}
