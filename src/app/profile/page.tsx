@@ -279,7 +279,13 @@ export default function ProfilePage() {
   }
 
   const isTransactionComplete = (purchase: Purchase) => {
-    return !!purchase.tracking_number;
+    const estimatedDeliveryDate = new Date(purchase.created_at);
+    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + 3); // 배송완료 예정일 (3일 후)
+    
+    const completionDate = new Date(estimatedDeliveryDate);
+    completionDate.setDate(completionDate.getDate() + 2); // 거래완료일 (배송완료 예정일 2일 후)
+    
+    return new Date() >= completionDate;
   };
 
   const sortedPurchases = purchases.sort((a, b) => 
@@ -518,8 +524,10 @@ export default function ProfilePage() {
                                   <p className="text-sm text-gray-500">구매 가격: {purchase.price.toLocaleString()}원</p>
                                   <p className="text-sm text-gray-500">배송 주소: {purchase.shipping_address}</p>
                                 </div>
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isTransactionComplete(purchase) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                  {isTransactionComplete(purchase) ? '거래 완료' : '거래 중'}
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                  isTransactionComplete(purchase) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {isTransactionComplete(purchase) ? '거래완료' : '거래중'}
                                 </span>
                               </div>
                               <div className="mt-2 space-y-1">
