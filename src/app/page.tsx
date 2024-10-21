@@ -117,10 +117,25 @@ export default function Home() {
               layout="fill"
               objectFit="cover"
             />
+            <div className="absolute top-0 right-0 flex flex-col items-end">
+              <div className="bg-green-500 text-white px-2 py-1 text-xs font-bold rounded-bl-lg mb-1">
+                무료배송 O
+              </div>
+              <div className="bg-red-500 text-white px-2 py-1 text-xs font-bold rounded-bl-lg">
+                쿠폰사용 O
+              </div>
+            </div>
           </div>
           <div className="p-2 flex flex-col justify-between flex-grow">
-            <h3 className="text-sm font-semibold mb-1 text-gray-800 line-clamp-2">{fruit.name}</h3>
-            <p className="text-base font-bold text-red-600">가격: {fruit.price.toLocaleString()}원</p>
+            <h3 className="text-sm font-semibold mb-1 text-gray-800 line-clamp-2 h-10">
+              {fruit.name}
+            </h3>
+            <div>
+              <p className="text-base font-bold text-red-600">
+                {fruit.price.toLocaleString()}원
+              </p>
+              <p className="text-xs text-green-600 font-semibold">무료배송</p>
+            </div>
           </div>
         </Link>
       ) : (
@@ -187,7 +202,7 @@ export default function Home() {
   }, [calculateCoupons])
 
   const selectBox = (index: number) => {
-    if (openedBoxes.length >= 2) return
+    if (openedBoxes.length >= 4) return  // 2에서 4로 변경
     
     const newOpenedBoxes = [...openedBoxes, index]
     setOpenedBoxes(newOpenedBoxes)
@@ -195,7 +210,7 @@ export default function Home() {
     const newSelectedCoupons = [...selectedCoupons, boxValues[index]]
     setSelectedCoupons(newSelectedCoupons)
     
-    if (newOpenedBoxes.length === 2) {
+    if (newOpenedBoxes.length === 4) {  // 2에서 4로 변경
       setIsBoxesRevealed(true)
     }
   }
@@ -254,7 +269,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100">
       <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
       <div className="bg-yellow-200 py-6 px-4 text-center">
-        <p className="text-sm font-bold text-gray-800">🎉 특별 이벤트: 간편로그인하면 랜덤박스 2개 개봉 기회! 🎁</p>
+        <p className="text-sm font-bold text-gray-800">🎉 특별 이벤트: 최초 1회 간편로그인하면 랜덤박스 4개 개봉 기회! 🎁</p>
         <p className="text-xs text-gray-700 mt-2">지금 바로 가입하고 특별한 혜택을 만나보세요!</p>
         {!user && (
           <button onClick={handleLogin} className="mt-4 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
@@ -313,7 +328,7 @@ export default function Home() {
       {user && !hasParticipatedEvent && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">랜덤박스 열기</h2>
-          <p className="text-gray-600 mb-4">원하는 랜덤박스 2개를 선택해주세요!</p>
+          <p className="text-gray-600 mb-4">원하는 랜덤박스 4개를 선택해주세요!</p>  {/* 2에서 4로 변경 */}
           <div className="grid grid-cols-3 gap-4">
             {boxValues.map((coupon, index) => (
               <button

@@ -95,11 +95,11 @@ export default function FruitDetail() {
   const getRandomCoupon = useCallback(() => {
     const coupons = [
       { name: '무료배송', value: '무료배송' },
-      { name: '700원 할인', value: '700' },
-      { name: '1900원 할인', value: '1900' },
-      { name: '1800원 할인', value: '1800' },
-      { name: '900원 할인', value: '900' },
-      { name: '2100원 할인', value: '2100' },
+      { name: '500원 할인', value: '500' },
+      { name: '500원 할인', value: '500' },
+      { name: '1000원 할인', value: '1000' },
+      { name: '1000원 할인', value: '1000' },
+      { name: '1500원 할인', value: '1500' },
       { name: '2000원 할인', value: '2000' }
     ]
     return coupons[Math.floor(Math.random() * coupons.length)]
@@ -114,13 +114,13 @@ export default function FruitDetail() {
     const coupons: Coupon[] = []
 
     // 첫 번째 박스에 95% 확률로 무료배송 쿠폰 추가
-    if (Math.random() < 0.99) {
+    if (Math.random() < 1) {
       coupons.push({ name: '무료배송', value: '무료배송' })
     } else {
       coupons.push(getRandomCoupon())
     }
 
-    // 두 번째 박스에는 무료배송 쿠폰이 아닌 다른 쿠폰 추가
+    // 두 번째 박스에 무료배송 쿠폰이 아닌 다른 쿠폰 추가
     coupons.push(getRandomCoupon())
 
     // 나머지 4개 박스에 랜덤 쿠폰 추가
@@ -193,7 +193,7 @@ export default function FruitDetail() {
         const couponParams = encodeURIComponent(encodeURIComponent(JSON.stringify(selectedCoupons)));
         router.push(`/purchase/${id}?coupons=${couponParams}`);
       } else {
-        alert('구매하기 전에 랜덤박스를 열어주세요!');
+        alert('구매하기 전에 할인 쿠폰을 열어주세요!');
       }
     } else {
       setIsLoginModalOpen(true);
@@ -221,6 +221,32 @@ export default function FruitDetail() {
       });
     }, 100);  // 약간의 지연을 추가합니다.
   }, []);
+
+  const renderCouponBoxes = () => (
+    <div className="flex flex-col items-center my-4 w-full px-2">
+      <p className={`text-base mb-3 font-bold ${isBoxOpened ? 'text-red-600' : 'text-red-600'}`}>
+        {isBoxOpened ? "결제 후에 할인 쿠폰을 받아 보세요!" : "할인 쿠폰 박스를 열어주세요!"}
+      </p>
+      <div className="grid grid-cols-3 gap-2 w-full">
+        {boxValues.map((coupon, index) => (
+          <button
+            key={index}
+            onClick={() => selectBox(index)}
+            disabled={isBoxesRevealed || openedBoxes.includes(index)}
+            className={`w-full h-12 ${
+              openedBoxes.includes(index)
+                ? 'bg-green-500'
+                : isBoxesRevealed
+                ? 'bg-gray-300'
+                : 'bg-yellow-300 hover:bg-yellow-500'
+            } rounded-lg shadow-md flex items-center justify-center text-sm font-semibold text-white transition-colors`}
+          >
+            {openedBoxes.includes(index) ? revealedCoupons[index].name : '?'}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 
   if (!id) {
     return <div>유효하지 않은 과일 ID입니다.</div>
@@ -250,64 +276,22 @@ export default function FruitDetail() {
                   <p className="text-gray-600 mb-2 sm:mb-4">{fruit.description}</p>
                 )}
                 <div className="flex justify-between items-center mb-1 sm:mb-2">
-                  <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원</p>
+                  <p className="text-lg sm:text-xl font-semibold text-gray-800">가격: {fruit.price.toLocaleString()}원 (무료배송)</p>
                   <div className="mt-4 flex justify-between items-center">
                     <button
                       onClick={handleComparePrice}
-                      className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors"
+                      className="text-sm bg-green-400 text-white px-3 py-1 rounded-full hover:bg-green-600 transition-colors"
                     >
                       가격 비교하러 가기
                     </button>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex flex-col items-center my-4">
-                    <p className={`text-sm mb-2 font-bold ${isBoxOpened ? 'text-red-600' : 'text-red-600'}`}>
-                      {isBoxOpened ? "결제 후에 쿠폰을 받아 보세요!" : "랜덤 박스를 열어주세요!"}
-                    </p>
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex justify-center gap-1">
-                        {boxValues.slice(0, 3).map((coupon, index) => (
-                          <button
-                            key={index}
-                            onClick={() => selectBox(index)}
-                            disabled={isBoxesRevealed || openedBoxes.includes(index)}
-                            className={`w-20 h-10 ${
-                              openedBoxes.includes(index)
-                                ? 'bg-green-500'
-                                : isBoxesRevealed
-                                ? 'bg-gray-300'
-                                : 'bg-yellow-300 hover:bg-yellow-500'
-                            } rounded-lg shadow-md flex items-center justify-center text-sm font-semibold text-white transition-colors`}
-                          >
-                            {openedBoxes.includes(index) ? revealedCoupons[index].name : '?'}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex justify-center gap-1">
-                        {boxValues.slice(3).map((coupon, index) => (
-                          <button
-                            key={index + 3}
-                            onClick={() => selectBox(index + 3)}
-                            disabled={isBoxesRevealed || openedBoxes.includes(index + 3)}
-                            className={`w-20 h-10 ${
-                              openedBoxes.includes(index + 3)
-                                ? 'bg-green-500'
-                                : isBoxesRevealed
-                                ? 'bg-gray-300'
-                                : 'bg-yellow-300 hover:bg-yellow-500'
-                            } rounded-lg shadow-md flex items-center justify-center text-sm font-semibold text-white transition-colors`}
-                          >
-                            {openedBoxes.includes(index + 3) ? revealedCoupons[index + 3].name : '?'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                <div className="space-y-7">
+                  {renderCouponBoxes()}
                   {isBoxesRevealed && (
                     <div className="mt-4 text-center">
                       <p className="text-lg font-semibold text-green-600">
-                        선택된 쿠폰: {selectedCoupons.map(coupon => coupon.name).join(', ')}
+                        선택된 할인 쿠폰: {selectedCoupons.map(coupon => coupon.name).join(', ')}
                       </p>
                       <button
                         onClick={handlePurchase}
@@ -373,7 +357,7 @@ export default function FruitDetail() {
               </div>
               
               {/* 검색 섹션 */}
-              <div ref={searchSectionRef} className="mt-8 mb-4">  {/* mt-4를 mt-8�� 변경 */}
+              <div ref={searchSectionRef} className="mt-8 mb-4">  {/* mt-4를 mt-8 변경 */}
                 {activeSearch && (
                   <div className="h-[600px] border border-gray-300 rounded-lg overflow-hidden">
                     <iframe

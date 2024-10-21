@@ -52,7 +52,6 @@ export default function PurchasePage() {
   const searchParams = useSearchParams()
   const id = params?.id
   const [pendingCoupons, setPendingCoupons] = useState<Coupon[]>([])
-  const [shippingFee] = useState(3000)
   const [showCoupons, setShowCoupons] = useState(false)
   const [isProfileComplete, setIsProfileComplete] = useState(false)
   const [editedUser, setEditedUser] = useState({
@@ -147,14 +146,12 @@ export default function PurchasePage() {
     let discountedPrice = price;
     const discountSteps: string[] = [];
     let totalDiscount = 0;
-    let isShippingFree = false;
-    let shippingDiscount = 0;
+    const isShippingFree = true; // 'let'을 'const'로 변경
 
     coupons.forEach((coupon, index) => {
       if (coupon.value === '무료배송') {
-        isShippingFree = true;
-        shippingDiscount = shippingFee;
-        discountSteps.push(`${index + 1}. 무료배송 쿠폰 적용 (-${shippingFee.toLocaleString()}원)`);
+        // 무료배송 쿠폰은 이미 적용되어 있으므로 무시
+        discountSteps.push(`${index + 1}. 무료배송 쿠폰 (이미 무료배송이 적용되어 있습니다)`);
       } else if (coupon.value.endsWith('%')) {
         const discountPercentage = parseInt(coupon.value);
         const discountAmount = Math.round(discountedPrice * (discountPercentage / 100));
@@ -169,11 +166,9 @@ export default function PurchasePage() {
       }
     });
 
-    const finalShippingFee = isShippingFree ? 0 : shippingFee;
-    const finalPrice = discountedPrice + finalShippingFee;
-    totalDiscount += shippingDiscount; // 배송비 할인을 총 할인 금액에 추가
+    const finalPrice = discountedPrice + 0; // 항상 0원으로 설정
 
-    return { finalPrice, steps: discountSteps, totalDiscount, isShippingFree, finalShippingFee };
+    return { finalPrice, steps: discountSteps, totalDiscount, isShippingFree, finalShippingFee: 0 };
   }
 
   const toggleCoupon = (coupon: Coupon) => {
@@ -182,6 +177,12 @@ export default function PurchasePage() {
       if (isAlreadySelected) {
         return prevSelected.filter((c) => c.id !== coupon.id);
       } else {
+        // 상품 가격이 10,000원 이하일 때 1,000원 초과 쿠폰 사용 제한
+        if (fruit && fruit.price <= 10000 && parseInt(coupon.value) > 1000) {
+          alert('10,000원 이하 상품에는 1,000원 이하의 쿠폰만 사용 가능합니다.');
+          return prevSelected;
+        }
+
         const isDiscountCoupon = coupon.value !== '무료배송';
         const isShippingCoupon = coupon.value === '무료배송';
         
@@ -200,7 +201,7 @@ export default function PurchasePage() {
             coupon
           ];
         } else {
-          // 아직 해당 종의 쿠폰이 선택되지 않았으면 새 쿠폰을 추가
+          // 아직 해당 종류의 쿠폰이 선택되지 않았으면 새 쿠폰을 추가
           return [...prevSelected, coupon];
         }
       }
@@ -494,9 +495,14 @@ export default function PurchasePage() {
                               checked={selectedCoupons.some(c => c.id === coupon.id)}
                               onChange={() => toggleCoupon(coupon)}
                               className="form-checkbox h-4 w-4 text-indigo-600"
+                              disabled={fruit && fruit.price <= 10000 && parseInt(coupon.value) > 1000}
                             />
-                            <label htmlFor={`coupon-${coupon.id}`} className="text-sm text-gray-700">
+                            <label 
+                              htmlFor={`coupon-${coupon.id}`} 
+                              className={`text-sm ${fruit && fruit.price <= 10000 && parseInt(coupon.value) > 1000 ? 'text-gray-400' : 'text-gray-700'}`}
+                            >
                               {coupon.name} ({coupon.value})
+                              {fruit && fruit.price <= 10000 && parseInt(coupon.value) > 1000 && ' (사용 불가)'}
                             </label>
                           </div>
                         ))
@@ -590,7 +596,7 @@ export default function PurchasePage() {
             <div className="flex flex-col space-y-4">
               <div className="text-lg font-medium text-gray-900">
                 <p>상품 가격: {fruit?.price.toLocaleString()}원</p>
-                <p>기본 배송비: {shippingFee.toLocaleString()}원</p>
+                <p>배송비: 무료</p>
                 {selectedCoupons.length > 0 && (
                   <>
                     <ul className="list-none text-sm text-gray-600 mt-2">
@@ -600,10 +606,6 @@ export default function PurchasePage() {
                     </ul>
                     <p className="mt-2 font-bold">
                       총 할인 금액: {calculateDiscountedPrice(fruit?.price || 0, selectedCoupons).totalDiscount.toLocaleString()}원
-                    </p>
-                    <p className="mt-2">
-                      배송비: {calculateDiscountedPrice(fruit?.price || 0, selectedCoupons).finalShippingFee.toLocaleString()}원
-                      {calculateDiscountedPrice(fruit?.price || 0, selectedCoupons).isShippingFree && ' (무료배송 적용)'}
                     </p>
                     <p className="mt-2 text-xl font-bold">
                       최종 결제 금액: {calculateDiscountedPrice(fruit?.price || 0, selectedCoupons).finalPrice.toLocaleString()}원
@@ -632,7 +634,7 @@ export default function PurchasePage() {
                     화번호와 주를 입력해주셔야 매가 가능하니다!
                   </p>
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">전화번호</label>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">화번호</label>
                     <input
                       type="tel"
                       id="phone"

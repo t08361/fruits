@@ -254,38 +254,16 @@ export default function ProfilePage() {
     { name: '롯데택배', url: 'https://www.lotteglogis.com/home/reservation/tracking/index' },
   ]
 
-  const handleCouponsReceived = async (newCoupons: string[]) => {
-    const newCouponsData = newCoupons.map(couponType => ({
+  const handleCouponsReceived = (newCoupons: string[]) => {
+    const couponsData: Coupon[] = newCoupons.map(couponType => ({
       id: Math.random().toString(36).substr(2, 9),
-      user_id: user?.id,
-      user_name: user?.user_metadata?.name || '',  // 사용자 이름 추가
       coupon_type: couponType,
       coupon_value: couponType,
-      is_used: false,
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 2주 후 만료
+      is_used: false
     }));
 
-    setCoupons([...coupons, ...newCouponsData]);
-    setShowRandomBox(false);
-
-    // 쿠폰을 데이터베이스에 저장
-    for (const coupon of newCouponsData) {
-      const { error } = await supabase.from('coupons').insert(coupon);
-      if (error) {
-        console.error('Error saving coupon:', error);
-      }
-    }
-
-    // 랜덤박스 열기 이벤트 기록
-    const { error } = await supabase.from('user_events').insert({
-      user_id: user?.id,
-      event_type: 'random_box_opened',
-      created_at: new Date().toISOString()
-    });
-
-    if (error) {
-      console.error('Error recording random box event:', error);
-    }
+    setCoupons(prevCoupons => [...prevCoupons, ...couponsData]);
   };
 
   const handleDaumPostcode = () => {
