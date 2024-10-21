@@ -40,6 +40,7 @@ export default function Home() {
   const [isBoxesRevealed, setIsBoxesRevealed] = useState(false)
   const [hasParticipatedEvent, setHasParticipatedEvent] = useState(false)
   const [displayMode, setDisplayMode] = useState<'grouped' | 'mixed' | 'budget' | 'budget10k' | 'over20k'>('mixed')
+  const [isLoading, setIsLoading] = useState(true) // 새로운 상태 추가
 
   const fetchFruits = useCallback(async () => {
     const { data, error } = await supabase
@@ -69,16 +70,21 @@ export default function Home() {
   }
 
   const checkEventParticipation = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('customers')
-      .select('is_evented')
-      .eq('id', userId)
-      .single()
+    setIsLoading(true) // 로딩 시작
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('is_evented')
+        .eq('id', userId)
+        .single()
 
-    if (error) {
+      if (error) throw error
+
+      setHasParticipatedEvent(data?.is_evented || false)
+    } catch (error) {
       console.error('Error checking event participation:', error)
-    } else {
-      setHasParticipatedEvent(data.is_evented)
+    } finally {
+      setIsLoading(false) // 로딩 종료
     }
   }, [supabase])
 
@@ -88,6 +94,8 @@ export default function Home() {
       setUser(session?.user ?? null)
       if (session?.user) {
         checkEventParticipation(session.user.id)
+      } else {
+        setIsLoading(false) // 세션이 없으면 로딩 종료
       }
     })
 
@@ -95,6 +103,8 @@ export default function Home() {
       setUser(session?.user ?? null)
       if (session?.user) {
         checkEventParticipation(session.user.id)
+      } else {
+        setIsLoading(false) // 세션이 없으면 로딩 종료
       }
     })
 
@@ -325,7 +335,7 @@ export default function Home() {
         </div>
       </div>
 
-      {user && !hasParticipatedEvent && (
+      {!isLoading && user && !hasParticipatedEvent && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">랜덤박스 열기</h2>
           <p className="text-gray-600 mb-4">원하는 랜덤박스 2개를 선택해주세요!</p>  {/* 4에서 2로 변경 */}
