@@ -121,7 +121,7 @@ export default function Home() {
               <div className="bg-green-500 text-white px-1 py-0.5 text-[11px] font-bold rounded-bl-lg rounded-tl-lg mb-0.5">
                 무료배송 O
               </div>
-              <div className="bg-red-500 text-white px-1 py-0.5 text-[11px] font-bold rounded-bl-lg rounded-tl-lg ">
+              <div className="bg-red-500 text-white px-1 py-0.5 text-[11px] font-bold rounded-bl-lg rounded-tl-lg">
                 쿠폰사용 O
               </div>
             </div>
@@ -134,6 +134,7 @@ export default function Home() {
               <p className="text-base font-bold text-red-600">
                 {fruit.price.toLocaleString()}원
               </p>
+              <p className="text-xs text-green-600 font-semibold">무료배송</p>
             </div>
           </div>
         </Link>
